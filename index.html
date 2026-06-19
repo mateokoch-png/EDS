@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EDS4 Study App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- HOME -->
+  <div id="screen-home" class="screen active">
+    <div class="home-hero">
+      <h1 class="home-title">EDS4 Study</h1>
+      <p class="home-subtitle">Electrical Drive Systems 4 · Fontys Mechatronics</p>
+      <div class="home-ring-wrap">
+        <svg class="progress-ring" viewBox="0 0 120 120" width="120" height="120">
+          <circle class="ring-bg" cx="60" cy="60" r="50"/>
+          <circle id="ring-fill" class="ring-fill" cx="60" cy="60" r="50"
+            stroke-dasharray="314" stroke-dashoffset="314"/>
+        </svg>
+        <div class="ring-label">
+          <span id="ring-pct">0%</span>
+          <span class="ring-sub">mastered</span>
+        </div>
+      </div>
+      <div class="home-ctas">
+        <button class="btn btn-primary" id="btn-practice">Practice</button>
+        <button class="btn btn-secondary" id="btn-flashcards">Flashcards</button>
+        <button class="btn btn-accent" id="btn-exam">Exam Simulation</button>
+      </div>
+      <div class="home-ctas" style="margin-top:8px">
+        <a class="btn btn-secondary" href="glossary.html" style="text-decoration:none;text-align:center;display:block">📖 Glossary Flashcards</a>
+      </div>
+      <div class="home-stats" id="home-stats"></div>
+    </div>
+  </div>
+
+  <!-- PICKER -->
+  <div id="screen-picker" class="screen">
+    <div class="top-bar">
+      <button class="back-btn" id="picker-back">← Back</button>
+      <h2 id="picker-title">Practice Session</h2>
+      <div></div>
+    </div>
+    <div class="picker-body">
+      <div class="picker-section">
+        <div class="section-header">
+          <span>Topics</span>
+          <button class="link-btn" id="picker-all-toggle">Select All</button>
+        </div>
+        <div class="topic-grid" id="topic-grid"></div>
+      </div>
+      <div class="picker-section" id="picker-types-section">
+        <div class="section-header"><span>Question Types</span></div>
+        <div class="type-checks" id="type-checks">
+          <label class="check-label"><input type="checkbox" value="mc" checked> Multiple Choice</label>
+          <label class="check-label"><input type="checkbox" value="tf" checked> True / False</label>
+          <label class="check-label"><input type="checkbox" value="open" checked> Open / Short Answer</label>
+        </div>
+      </div>
+      <div class="picker-section" id="picker-count-section">
+        <div class="section-header">
+          <span>Questions</span>
+          <span id="count-label">20</span>
+        </div>
+        <input type="range" id="count-slider" min="5" max="40" value="20" step="5">
+      </div>
+      <div class="picker-section">
+        <div class="section-header"><span>Difficulty</span></div>
+        <div class="diff-pills" id="diff-pills">
+          <button class="pill active" data-diff="all">All</button>
+          <button class="pill" data-diff="easy">Easy</button>
+          <button class="pill" data-diff="medium">Medium</button>
+          <button class="pill" data-diff="hard">Hard</button>
+        </div>
+      </div>
+      <button class="btn btn-primary full-width" id="picker-start" disabled>Start Session</button>
+    </div>
+  </div>
+
+  <!-- QUIZ (also used for Exam) -->
+  <div id="screen-quiz" class="screen">
+    <div class="top-bar quiz-bar">
+      <div class="quiz-meta" id="quiz-meta"></div>
+      <div class="quiz-counter" id="quiz-counter"></div>
+      <div class="quiz-timer-wrap">
+        <span class="exam-timer hidden" id="exam-timer">1:30:00</span>
+        <button class="icon-btn" id="quiz-exit">✕</button>
+      </div>
+    </div>
+    <div class="progress-strip"><div class="progress-fill" id="quiz-progress"></div></div>
+    <div class="quiz-body" id="quiz-body"></div>
+  </div>
+
+  <!-- FLASHCARD -->
+  <div id="screen-flashcard" class="screen">
+    <div class="top-bar">
+      <button class="back-btn" id="fc-back">← Exit</button>
+      <div class="quiz-counter" id="fc-counter"></div>
+      <div></div>
+    </div>
+    <div class="progress-strip"><div class="progress-fill" id="fc-progress"></div></div>
+    <div class="fc-body">
+      <div class="fc-scene" id="fc-scene">
+        <div class="fc-card" id="fc-card">
+          <div class="fc-front" id="fc-front"></div>
+          <div class="fc-back" id="fc-back"></div>
+        </div>
+      </div>
+      <div class="fc-hint" id="fc-hint">Tap card to reveal</div>
+      <div class="fc-actions" id="fc-actions"></div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="screen-results" class="screen">
+    <div class="results-wrap">
+      <h2 class="results-title" id="results-title">Session Complete</h2>
+      <div class="results-ring-wrap">
+        <svg class="progress-ring" viewBox="0 0 120 120" width="120" height="120">
+          <circle class="ring-bg" cx="60" cy="60" r="50"/>
+          <circle id="results-ring-fill" class="ring-fill" cx="60" cy="60" r="50"
+            stroke-dasharray="314" stroke-dashoffset="314"/>
+        </svg>
+        <div class="ring-label">
+          <span id="results-pct"></span>
+          <span class="ring-sub" id="results-pts"></span>
+        </div>
+      </div>
+      <div id="results-grade" class="results-grade hidden"></div>
+      <div id="results-table-wrap"></div>
+      <div id="results-smart-cta" class="smart-cta"></div>
+      <div class="results-btns" id="results-btns"></div>
+    </div>
+  </div>
+
+  <script src="questions.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>EDS4 Glossary Flashcards</title>
+<style>
+  :root {
+    --bg: #0f1115; --card: #1a1d24; --accent: #4d8dff; --text: #f0f2f5;
+    --sub: #9aa3b2; --good: #2ecc71; --bad: #e74c3c; --border: #2a2e38;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    height: 100%; overscroll-behavior: none; user-select: none; }
+  #app { display: flex; flex-direction: column; height: 100vh; max-width: 480px; margin: 0 auto; padding: 12px; }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+  .topbar h1 { font-size: 17px; margin: 0; font-weight: 700; }
+  .icon-btn { background: var(--card); border: 1px solid var(--border); color: var(--text);
+    border-radius: 10px; padding: 8px 12px; font-size: 14px; cursor: pointer; }
+
+  .progress-strip { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 14px; }
+  .progress-fill { height: 100%; background: var(--accent); transition: width .25s; }
+
+  /* ── Topic picker ── */
+  #screen-picker { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+  .topic-list { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+  .topic-row { display: flex; align-items: center; gap: 10px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; cursor: pointer; }
+  .topic-row.selected { border-color: var(--accent); background: #1d2a45; }
+  .topic-row .icon { font-size: 20px; }
+  .topic-row .name { flex: 1; font-size: 15px; font-weight: 600; }
+  .topic-row .count { font-size: 12px; color: var(--sub); }
+  .topic-row .check { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--sub); flex-shrink: 0; }
+  .topic-row.selected .check { border-color: var(--accent); background: var(--accent); }
+
+  .picker-actions { display: flex; gap: 8px; margin: 10px 0; }
+  .picker-actions button { flex: 1; }
+
+  .btn { background: var(--card); border: 1px solid var(--border); color: var(--text);
+    border-radius: 12px; padding: 13px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-primary:disabled { opacity: .4; }
+
+  /* ── Card screen ── */
+  #screen-cards { flex: 1; display: none; flex-direction: column; }
+  .deck-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--sub); margin-bottom: 6px; }
+
+  .card-scene { flex: 1; perspective: 1200px; margin-bottom: 14px; min-height: 0; }
+  .card-3d { position: relative; width: 100%; height: 100%; transition: transform .45s; transform-style: preserve-3d; cursor: pointer; }
+  .card-3d.flipped { transform: rotateY(180deg); }
+  .card-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 18px;
+    border: 1px solid var(--border); background: var(--card); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 22px; overflow-y: auto; text-align: center; }
+  .card-face.back { transform: rotateY(180deg); justify-content: flex-start; padding-top: 26px; }
+  .card-topic-badge { position: absolute; top: 12px; left: 12px; font-size: 11px; padding: 3px 9px;
+    border-radius: 20px; background: #2a2e38; color: var(--sub); }
+  .card-term { font-size: 24px; font-weight: 700; line-height: 1.3; }
+  .card-hint { position: absolute; bottom: 14px; font-size: 12px; color: var(--sub); }
+  .card-def-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--accent); font-weight: 700; margin-bottom: 8px; }
+  .card-def { font-size: 16px; line-height: 1.5; }
+  .card-svg { width: 90%; max-width: 280px; margin-top: 14px; color: var(--accent); }
+  .card-svg svg { width: 100%; height: auto; }
+
+  .deck-actions { display: flex; gap: 10px; margin-top: 4px; }
+  .deck-actions button { flex: 1; padding: 15px; border-radius: 14px; font-size: 16px; font-weight: 700; border: none; }
+  .btn-again { background: #3a2229; color: var(--bad); }
+  .btn-gotit { background: #1f3a2c; color: var(--good); }
+  .deck-actions.hidden { visibility: hidden; }
+
+  /* ── Done screen ── */
+  #screen-done { flex: 1; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 14px; }
+  #screen-done .big { font-size: 40px; }
+  #screen-done p { color: var(--sub); margin: 0; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="topbar">
+    <h1 id="title">EDS4 Glossary</h1>
+    <button class="icon-btn" id="btn-shuffle-toggle">🔀</button>
+  </div>
+  <div class="progress-strip"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+
+  <!-- PICKER -->
+  <div id="screen-picker">
+    <div class="topic-list" id="topic-list"></div>
+    <div class="picker-actions">
+      <button class="btn" id="btn-select-all">Select All</button>
+      <button class="btn btn-primary" id="btn-start">Start (0)</button>
+    </div>
+  </div>
+
+  <!-- CARDS -->
+  <div id="screen-cards">
+    <div class="deck-meta"><span id="deck-counter">0 / 0</span><span id="deck-remaining"></span></div>
+    <div class="card-scene" id="card-scene">
+      <div class="card-3d" id="card-3d">
+        <div class="card-face front">
+          <span class="card-topic-badge" id="topic-badge-f"></span>
+          <div class="card-term" id="term-text"></div>
+          <span class="card-hint">tap to reveal</span>
+        </div>
+        <div class="card-face back">
+          <span class="card-topic-badge" id="topic-badge-b"></span>
+          <div class="card-def-label">Definition</div>
+          <div class="card-def" id="def-text"></div>
+          <div class="card-svg" id="svg-holder"></div>
+        </div>
+      </div>
+    </div>
+    <div class="deck-actions hidden" id="deck-actions">
+      <button class="btn-again" id="btn-again">✗ Again</button>
+      <button class="btn-gotit" id="btn-gotit">✓ Got it</button>
+    </div>
+  </div>
+
+  <!-- DONE -->
+  <div id="screen-done">
+    <div class="big">🎉</div>
+    <h2>Deck cleared!</h2>
+    <p id="done-stats"></p>
+    <button class="btn btn-primary" id="btn-restart" style="width:200px">Study Again</button>
+    <button class="btn" id="btn-home" style="width:200px">Pick Topics</button>
+  </div>
+
+</div>
+
+<script>
+'use strict';
+
+// Schematic SVG snippets — kept tiny, monochrome, viewBox-scaled so they fit a phone card.
+const SVG = {
+  hbridge: `<svg viewBox="0 0 200 140"><rect x="10" y="10" width="180" height="120" fill="none" stroke="currentColor" stroke-width="2"/>
+    <line x1="40" y1="10" x2="40" y2="50" stroke="currentColor" stroke-width="2"/><rect x="25" y="50" width="30" height="14" fill="none" stroke="currentColor" stroke-width="2"/>
+    <line x1="160" y1="10" x2="160" y2="50" stroke="currentColor" stroke-width="2"/><rect x="145" y="50" width="30" height="14" fill="none" stroke="currentColor" stroke-width="2"/>
+    <line x1="40" y1="90" x2="40" y2="130" stroke="currentColor" stroke-width="2"/><rect x="25" y="76" width="30" height="14" fill="none" stroke="currentColor" stroke-width="2"/>
+    <line x1="160" y1="90" x2="160" y2="130" stroke="currentColor" stroke-width="2"/><rect x="145" y="76" width="30" height="14" fill="none" stroke="currentColor" stroke-width="2"/>
+    <line x1="40" y1="64" x2="40" y2="76" stroke="currentColor" stroke-width="2"/><line x1="160" y1="64" x2="160" y2="76" stroke="currentColor" stroke-width="2"/>
+    <ellipse cx="100" cy="70" rx="26" ry="18" fill="none" stroke="currentColor" stroke-width="2"/><text x="100" y="75" font-size="14" text-anchor="middle" fill="currentColor">M</text>
+    <line x1="40" y1="70" x2="74" y2="70" stroke="currentColor" stroke-width="2"/><line x1="126" y1="70" x2="160" y2="70" stroke="currentColor" stroke-width="2"/>
+    <text x="100" y="20" font-size="12" text-anchor="middle" fill="currentColor">+V</text><text x="100" y="132" font-size="12" text-anchor="middle" fill="currentColor">GND</text></svg>`,
+
+  quadrature: `<svg viewBox="0 0 220 110"><path d="M10,30 L10,10 L40,10 L40,30 L70,30 L70,10 L100,10 L100,30 L130,30 L130,10 L160,10 L160,30 L190,30" fill="none" stroke="currentColor" stroke-width="2"/>
+    <path d="M25,80 L25,60 L55,60 L55,80 L85,80 L85,60 L115,60 L115,80 L145,80 L145,60 L175,60 L175,80" fill="none" stroke="currentColor" stroke-width="2"/>
+    <text x="2" y="22" font-size="11" fill="currentColor">A</text><text x="2" y="72" font-size="11" fill="currentColor">B</text>
+    <text x="100" y="100" font-size="10" text-anchor="middle" fill="currentColor">B lags A by 90° → CW direction</text></svg>`,
+
+  hall: `<svg viewBox="0 0 200 120"><rect x="60" y="40" width="80" height="40" fill="none" stroke="currentColor" stroke-width="2"/>
+    <line x1="60" y1="60" x2="20" y2="60" stroke="currentColor" stroke-width="2" marker-end="url(#arrow)"/><line x1="140" y1="60" x2="180" y2="60" stroke="currentColor" stroke-width="2"/>
+    <text x="20" y="50" font-size="11" fill="currentColor">I</text>
+    <line x1="100" y1="20" x2="100" y2="100" stroke="currentColor" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="105" y="18" font-size="11" fill="currentColor">B field</text>
+    <line x1="100" y1="40" x2="100" y2="20" stroke="currentColor" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="62" y="100" font-size="10" fill="currentColor">V_H across width ∝ I × B</text>
+    <defs><marker id="arrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="currentColor"/></marker></defs></svg>`,
+
+  optocoupler: `<svg viewBox="0 0 200 100"><rect x="20" y="20" width="160" height="60" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3,2"/>
+    <path d="M50,50 l-8,-6 v12 z M50,50 l8,-6 v12 z" fill="none" stroke="currentColor" stroke-width="2"/>
+    <line x1="40" y1="30" x2="40" y2="70" stroke="currentColor" stroke-width="2"/>
+    <path d="M65,40 l25,20 M65,60 l25,-20" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2,2"/>
+    <path d="M130,40 l15,10 -15,10 z" fill="none" stroke="currentColor" stroke-width="2"/>
+    <line x1="145,50" x2="160,50" stroke="currentColor" stroke-width="2"/>
+    <text x="100" y="14" font-size="10" text-anchor="middle" fill="currentColor">isolation barrier (no wire)</text>
+    <text x="40" y="92" font-size="9" text-anchor="middle" fill="currentColor">LED in</text><text x="150" y="92" font-size="9" text-anchor="middle" fill="currentColor">phototransistor out</text></svg>`,
+
+  flyback: `<svg viewBox="0 0 200 100"><rect x="15" y="15" width="40" height="50" fill="none" stroke="currentColor" stroke-width="2"/><text x="35" y="45" font-size="10" text-anchor="middle" fill="currentColor">SW</text>
+    <path d="M90,15 q10,10 0,20 q10,10 0,20 q10,10 0,20" fill="none" stroke="currentColor" stroke-width="2"/><text x="90" y="10" font-size="10" text-anchor="middle" fill="currentColor">L (load)</text>
+    <path d="M150,55 l-10,-8 v16 z" fill="none" stroke="currentColor" stroke-width="2"/><line x1="140" y1="15" x2="140" y2="65" stroke="currentColor" stroke-width="2"/>
+    <text x="150" y="10" font-size="10" text-anchor="middle" fill="currentColor">flyback diode</text>
+    <line x1="15" y1="15" x2="150" y2="15" stroke="currentColor" stroke-width="2"/><line x1="55" y1="15" x2="90" y2="15" stroke="currentColor" stroke-width="2"/><line x1="90" y1="15" x2="140" y2="15" stroke="currentColor" stroke-width="2"/>
+    <line x1="15" y1="65" x2="150" y2="65" stroke="currentColor" stroke-width="2"/>
+    <text x="100" y="90" font-size="9" text-anchor="middle" fill="currentColor">diode parallel to L, reverse-biased in normal operation</text></svg>`,
+
+  thermalckt: `<svg viewBox="0 0 220 90"><circle cx="20" cy="45" r="14" fill="none" stroke="currentColor" stroke-width="2"/><text x="20" y="49" font-size="9" text-anchor="middle" fill="currentColor">P</text>
+    <line x1="34" y1="45" x2="60" y2="45" stroke="currentColor" stroke-width="2"/>
+    <rect x="60" y="30" width="40" height="30" fill="none" stroke="currentColor" stroke-width="2"/><text x="80" y="49" font-size="10" text-anchor="middle" fill="currentColor">Rth1</text>
+    <line x1="100" y1="45" x2="126" y2="45" stroke="currentColor" stroke-width="2"/>
+    <rect x="126" y="30" width="40" height="30" fill="none" stroke="currentColor" stroke-width="2"/><text x="146" y="49" font-size="10" text-anchor="middle" fill="currentColor">Rth2</text>
+    <line x1="166" y1="45" x2="190" y2="45" stroke="currentColor" stroke-width="2"/>
+    <line x1="190" y1="20" x2="190" y2="70" stroke="currentColor" stroke-width="2"/><text x="200" y="49" font-size="10" fill="currentColor">Tamb</text>
+    <text x="110" y="85" font-size="9" text-anchor="middle" fill="currentColor">ΔT = P × ΣRth (series, like resistors)</text></svg>`,
+
+  thyristor: `<svg viewBox="0 0 160 110"><rect x="60" y="10" width="40" height="20" fill="none" stroke="currentColor" stroke-width="2"/><text x="80" y="24" font-size="9" text-anchor="middle" fill="currentColor">P</text>
+    <rect x="60" y="30" width="40" height="20" fill="none" stroke="currentColor" stroke-width="2"/><text x="80" y="44" font-size="9" text-anchor="middle" fill="currentColor">N</text>
+    <rect x="60" y="50" width="40" height="20" fill="none" stroke="currentColor" stroke-width="2"/><text x="80" y="64" font-size="9" text-anchor="middle" fill="currentColor">P</text>
+    <rect x="60" y="70" width="40" height="20" fill="none" stroke="currentColor" stroke-width="2"/><text x="80" y="84" font-size="9" text-anchor="middle" fill="currentColor">N</text>
+    <text x="80" y="5" font-size="10" text-anchor="middle" fill="currentColor">Anode</text><text x="80" y="100" font-size="10" text-anchor="middle" fill="currentColor">Cathode</text>
+    <line x1="100" y1="55" x2="130" y2="55" stroke="currentColor" stroke-width="2"/><text x="135" y="58" font-size="10" fill="currentColor">Gate</text></svg>`,
+
+  cmdm: `<svg viewBox="0 0 200 100"><line x1="20" y1="30" x2="180" y2="30" stroke="currentColor" stroke-width="2"/><line x1="20" y1="60" x2="180" y2="60" stroke="currentColor" stroke-width="2"/>
+    <line x1="40" y1="30" x2="40" y2="60" stroke="currentColor" stroke-width="1.5" marker-end="url(#a2)"/><line x1="60" y1="60" x2="60" y2="30" stroke="currentColor" stroke-width="1.5" marker-end="url(#a2)"/>
+    <text x="30" y="20" font-size="9" fill="currentColor">differential: opposite directions</text>
+    <line x1="100" y1="30" x2="100" y2="5" stroke="currentColor" stroke-width="1.5" marker-end="url(#a2)"/><line x1="120" y1="60" x2="120" y2="35" stroke="currentColor" stroke-width="1.5" marker-end="url(#a2)"/>
+    <text x="95" y="95" font-size="9" fill="currentColor">common-mode: same direction (to ground)</text>
+    <defs><marker id="a2" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="currentColor"/></marker></defs></svg>`,
+
+  skineffect: `<svg viewBox="0 0 140 140"><circle cx="70" cy="70" r="60" fill="none" stroke="currentColor" stroke-width="2"/>
+    <circle cx="70" cy="70" r="60" fill="currentColor" opacity="0.35"/><circle cx="70" cy="70" r="45" fill="white" opacity="0.9"/>
+    <text x="70" y="75" font-size="10" text-anchor="middle" fill="currentColor">low f</text>
+    <text x="70" y="135" font-size="10" text-anchor="middle" fill="currentColor">current crowds to outer ring δ at high f</text></svg>`,
+
+  n2: `<svg viewBox="0 0 200 100"><ellipse cx="50" cy="50" rx="25" ry="25" fill="none" stroke="currentColor" stroke-width="2"/><text x="50" y="55" font-size="11" text-anchor="middle" fill="currentColor">M</text>
+    <rect x="80" y="35" width="40" height="30" fill="none" stroke="currentColor" stroke-width="2"/><text x="100" y="55" font-size="9" text-anchor="middle" fill="currentColor">N:1</text>
+    <ellipse cx="160" cy="50" rx="30" ry="30" fill="none" stroke="currentColor" stroke-width="2"/><text x="160" y="55" font-size="11" text-anchor="middle" fill="currentColor">Load</text>
+    <line x1="75" y1="50" x2="80" y2="50" stroke="currentColor" stroke-width="2"/><line x1="120" y1="50" x2="130" y2="50" stroke="currentColor" stroke-width="2"/>
+    <text x="100" y="90" font-size="9" text-anchor="middle" fill="currentColor">J_reflected = J_load/N² , T_reflected = T_load/N</text></svg>`,
+
+  pidloop: `<svg viewBox="0 0 220 100"><circle cx="30" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="2"/><text x="30" y="54" font-size="12" text-anchor="middle" fill="currentColor">Σ</text>
+    <line x1="42" y1="50" x2="70" y2="50" stroke="currentColor" stroke-width="2"/>
+    <rect x="70" y="20" width="50" height="60" fill="none" stroke="currentColor" stroke-width="2"/><text x="95" y="40" font-size="9" text-anchor="middle" fill="currentColor">Kp,Ki,Kd</text>
+    <line x1="120" y1="50" x2="150" y2="50" stroke="currentColor" stroke-width="2"/>
+    <ellipse cx="175" cy="50" rx="20" ry="15" fill="none" stroke="currentColor" stroke-width="2"/><text x="175" y="54" font-size="10" text-anchor="middle" fill="currentColor">Motor</text>
+    <path d="M175,65 L175,90 L30,90 L30,62" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#a3)"/>
+    <text x="100" y="98" font-size="9" text-anchor="middle" fill="currentColor">position feedback</text>
+    <defs><marker id="a3" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="currentColor"/></marker></defs></svg>`,
+
+  groundloop: `<svg viewBox="0 0 200 100"><rect x="10" y="20" width="50" height="35" fill="none" stroke="currentColor" stroke-width="2"/><text x="35" y="42" font-size="9" text-anchor="middle" fill="currentColor">Dev A</text>
+    <rect x="140" y="20" width="50" height="35" fill="none" stroke="currentColor" stroke-width="2"/><text x="165" y="42" font-size="9" text-anchor="middle" fill="currentColor">Dev B</text>
+    <line x1="60" y1="30" x2="140" y2="30" stroke="currentColor" stroke-width="2"/><text x="100" y="25" font-size="8" text-anchor="middle" fill="currentColor">signal cable</text>
+    <line x1="35" y1="55" x2="35" y2="85" stroke="currentColor" stroke-width="2"/><line x1="165" y1="55" x2="165" y2="85" stroke="currentColor" stroke-width="2"/>
+    <line x1="35" y1="85" x2="165" y2="85" stroke="currentColor" stroke-width="2"/><text x="100" y="98" font-size="8" text-anchor="middle" fill="currentColor">separate earth path → loop encloses area</text></svg>`,
+
+  trapezoid: `<svg viewBox="0 0 200 90"><polyline points="10,70 60,20 120,20 170,70" fill="none" stroke="currentColor" stroke-width="2"/>
+    <line x1="10" y1="80" x2="190" y2="80" stroke="currentColor" stroke-width="1"/><text x="100" y="88" font-size="9" text-anchor="middle" fill="currentColor">time</text>
+    <text x="10" y="15" font-size="9" fill="currentColor">velocity</text></svg>`,
+
+  scurve: `<svg viewBox="0 0 200 90"><path d="M10,70 C40,70 40,20 60,20 L120,20 C140,20 140,70 170,70" fill="none" stroke="currentColor" stroke-width="2"/>
+    <line x1="10" y1="80" x2="190" y2="80" stroke="currentColor" stroke-width="1"/><text x="100" y="88" font-size="9" text-anchor="middle" fill="currentColor">time (rounded corners = limited jerk)</text></svg>`
+};
+
+const GLOSSARY_TOPICS = {
+  sensors:           { label: 'Sensors',            icon: '📡' },
+  motor_control:     { label: 'Motor Control',       icon: '⚡' },
+  motion_controllers:{ label: 'Motion Control',      icon: '🎛️' },
+  drive_systems:     { label: 'Drive Systems',       icon: '⚙️' },
+  interfacing:       { label: 'Interfacing',         icon: '🔌' },
+  communication:     { label: 'Communication',       icon: '🔗' },
+  safety:            { label: 'Safety',              icon: '🛡️' },
+  emc:               { label: 'EMC',                 icon: '📶' },
+  thermal:           { label: 'Thermal',             icon: '🌡️' },
+  control_basics:    { label: 'Control Basics',      icon: '🔁' },
+  robotics:          { label: 'Robotics/Kinematics', icon: '🤖' }
+};
+
+const GLOSSARY = [
+  // ── SENSORS ──────────────────────────────────────────────
+  { term: 'Accuracy', topic: 'sensors', def: 'How closely a sensor\'s output matches the true value. Reflects systematic (reproducible) error, which can be corrected in software.' },
+  { term: 'Resolution', topic: 'sensors', def: 'The smallest input change a sensor can detect with certainty. In digital systems, set by the A/D conversion step size.', svg: SVG.quadrature },
+  { term: 'Linearity', topic: 'sensors', def: 'How constant a sensor\'s input/output ratio (slope) is across its range. Sensitivity is only a fixed number when the sensor is linear.' },
+  { term: 'Repeatability / Precision', topic: 'sensors', def: 'How closely repeated readings of the same input agree with each other. Relates to random error (spread), NOT closeness to the true value — that\'s accuracy.' },
+  { term: 'Sensitivity', topic: 'sensors', def: 'Ratio of output change to input change (gain / scale factor). Only constant if the sensor is linear.' },
+  { term: 'Systematic error', topic: 'sensors', def: 'A reproducible, predictable measurement offset — corresponds to poor accuracy. Can be calibrated out.' },
+  { term: 'Random error', topic: 'sensors', def: 'Non-reproducible measurement deviation, described statistically (standard deviation). Corresponds to poor precision/repeatability.' },
+  { term: 'Current Transformer (CT)', topic: 'sensors', def: 'Measures AC current only: primary conductor through a toroidal core induces a proportional secondary current. Gives galvanic isolation but cannot measure DC (needs changing flux).' },
+  { term: 'Shunt resistor', topic: 'sensors', def: 'Precision low-value resistor in the current path; current found from V=I·R across it. Best read with a 4-wire (Kelvin) connection to avoid lead-resistance error. No isolation.' },
+  { term: 'Hall effect', topic: 'sensors', def: 'Current through a semiconductor slab in a magnetic field is deflected sideways, building up a transverse voltage proportional to both current and field strength.', svg: SVG.hall },
+  { term: 'Hall-effect current sensor', topic: 'sensors', def: 'Uses the Hall effect to sense the magnetic field of a current-carrying conductor. Open-loop, closed-loop, or digital variants. Measures AC and DC, gives galvanic isolation.' },
+  { term: 'Fluxgate sensor', topic: 'sensors', def: 'Highly sensitive current sensor using a saturable core driven by an excitation signal; very accurate, low drift, AC/DC capable — but expensive.' },
+  { term: 'Nul-flux (zero-flux) transformer', topic: 'sensors', def: 'Closed-loop current sensing: a feedback current cancels the net core flux to zero. The unknown primary current is then inferred from the known feedback current and turns ratio.' },
+  { term: 'CMRR (Common Mode Rejection Ratio)', topic: 'sensors', def: 'How well a differential amplifier rejects common-mode signal while amplifying only the differential signal, in dB. 110 dB ≈ 300,000× suppression.' },
+  { term: 'Instrumentation amplifier', topic: 'sensors', def: 'Precision differential amplifier (often 3-op-amp) with high input impedance and high CMRR — used to amplify small differential signals (e.g. shunt voltage) while rejecting noise.' },
+  { term: 'Incremental encoder', topic: 'sensors', def: 'Relative position sensor: quadrature pulse trains A & B (90° apart) plus optional once-per-rev index Z. Needs a reference/homing move; direction from A/B phase order.', svg: SVG.quadrature },
+  { term: 'Absolute encoder', topic: 'sensors', def: 'Outputs a unique code for every shaft position — position known instantly at power-up, no homing needed.' },
+  { term: 'Quadrature signals (A/B)', topic: 'sensors', def: 'Two encoder square waves 90° apart. Edge counting gives position; which channel leads the other gives direction.', svg: SVG.quadrature },
+  { term: 'SinCos encoder', topic: 'sensors', def: 'Outputs analog sine/cosine instead of digital pulses, allowing interpolation for much higher effective resolution than the raw signal period.' },
+  { term: 'PPR (Pulses Per Revolution)', topic: 'sensors', def: 'Number of pulse cycles an incremental encoder outputs per revolution — sets the base angular resolution before any ×2/×4 decoding or interpolation.' },
+  { term: 'Tachogenerator (Tacho)', topic: 'sensors', def: 'Direct speed sensor: output voltage proportional to shaft speed (Vg = Kg·n). Used for closed-loop speed control; needs low rotor inertia and linear bidirectional output.' },
+  { term: 'Transducer', topic: 'sensors', def: 'A feedback device converting the controlled physical quantity (e.g. speed, position) into an electrical signal the controller/comparator can use.' },
+
+  // ── THERMAL ──────────────────────────────────────────────
+  { term: 'Thermistor (NTC / PTC)', topic: 'thermal', def: 'Temperature-sensitive resistor. NTC: resistance falls as temperature rises (used for measurement). PTC: resistance jumps sharply above a trip temperature (RRT) — used for protection, not measurement.' },
+  { term: 'RRT (Rated Response Temperature)', topic: 'thermal', def: 'The defined trip temperature where a PTC thermistor\'s resistance rises sharply — used as the alarm/trip threshold in motor overload protection.' },
+  { term: 'Thermocouple', topic: 'thermal', def: 'Junction of two dissimilar metals producing a small voltage proportional to temperature difference (Seebeck effect). Robust, self-powered, but low output needs amplification and cold-junction correction.' },
+  { term: 'Cold Junction Compensation (CJC)', topic: 'thermal', def: 'Correction for the unwanted voltage generated where thermocouple wires meet copper measurement leads — either a counter-voltage at known temperature, or measuring the reference temperature and correcting mathematically.' },
+  { term: 'RTD (Resistance Temperature Detector)', topic: 'thermal', def: 'Sensor (e.g. Pt-100 = 100 Ω at 0°C) whose resistance varies nearly linearly with temperature. Very accurate, but needs excitation current and careful (often 4-wire) wiring.' },
+  { term: '4-wire Kelvin connection', topic: 'thermal', def: 'Separate excitation and sense lead pairs on a resistive sensor, eliminating lead-wire resistance from the measurement.' },
+  { term: 'Self-heating error', topic: 'thermal', def: 'Error in RTDs/thermistors caused by the excitation current itself heating the sensor (P = I²R), raising the reading above true ambient.' },
+  { term: 'Thermal resistance (Rth)', topic: 'thermal', def: 'Rth [°C/W]: steady-state temperature rise per watt dissipated. ΔT = P × Rth — thermal equivalent of Ohm\'s law.', svg: SVG.thermalckt },
+  { term: 'Thermal capacity (Cth)', topic: 'thermal', def: 'Heat capacity [J/°C] of a thermal mass (specific heat × mass). Combined with Rth gives the thermal time constant.' },
+  { term: 'Thermal time constant (τ_th)', topic: 'thermal', def: 'τ_th = Rth × Cth. θ(t) = θ_start + (θ_final − θ_start)(1 − e^(−t/τ_th)). After 1τ: 63% of final rise reached; after 5τ: essentially steady state.' },
+  { term: 'Power derating curve', topic: 'thermal', def: 'Graph of max allowable dissipated power, declining linearly (slope −1/Rth) with case/ambient temperature, reaching zero at T_junction(max).' },
+  { term: 'Insulation class (motor)', topic: 'thermal', def: 'Standardized max winding temperature rating: A=105°C, E=120°C, B=130°C, F=155°C, H=180°C. Higher class = more heat-resistant insulation.' },
+  { term: 'Duty mode (S1–S8)', topic: 'thermal', def: 'Standardized load/rest cycle classes: S1 continuous, S2 short-term, S3 intermittent periodic, S4 intermittent with starting effect, S5 adds electric braking, S6 continuous periodic with no-load (not de-energized), S7 with start/brake, S8 multiple load/speed levels.' },
+  { term: 'Duty Cycle (DC) of a motor load', topic: 'thermal', def: 'Fraction of the duty period under load: DC = Ton / Tcyc. Used with thermal time constant to find the equivalent continuous power for sizing.' },
+  { term: 'Insulation aging rule (expected life)', topic: 'thermal', def: 'Insulation life roughly halves per ~10°C increase above rated temperature: D_θ = D_max × 2^((θmax−θ)/Δθ).' },
+  { term: 'Heat damage in motors', topic: 'thermal', def: 'Excess heat causes magnetic damage (demagnetized permanent magnets), electrical damage (insulation breakdown), and mechanical damage (faster bearing/gear wear).' },
+
+  // ── MOTOR CONTROL ────────────────────────────────────────
+  { term: 'Pem = T·ω', topic: 'motor_control', def: 'Mechanical power output of a motor equals torque times angular velocity.' },
+  { term: 'Torque constant (Kt / Ki)', topic: 'motor_control', def: 'T = Kt × Ia. DC motor torque is proportional to armature current — current is measured/limited to control torque and protect drive electronics.' },
+  { term: 'Back-EMF (Uind = Ke·ω)', topic: 'motor_control', def: 'A rotating armature winding moving through a magnetic field induces a voltage proportional to speed. It opposes the applied voltage and limits current as speed rises.' },
+  { term: 'Torque-speed characteristic (DC motor)', topic: 'motor_control', def: 'Linear plot of torque vs speed from stall torque (Te0 at ω=0) to no-load speed (ω0 at T=0). Slope S = Ke·Km/Rr. Left of ω0 = motoring; right = generating.' },
+  { term: 'Armature reaction', topic: 'motor_control', def: 'The armature current\'s own magnetic field distorts the main field. Near saturation this reduces effective flux/torque, drooping the real torque-speed curve below ideal at high current.' },
+  { term: 'PM-DC motor', topic: 'motor_control', def: 'DC motor using permanent magnets instead of a wound field — linear torque-speed lines for each applied voltage. Still subject to armature reaction at high current.' },
+  { term: 'DC Shunt Motor', topic: 'motor_control', def: 'Field winding in parallel with the armature across the same supply — field and armature current are largely independent, giving good speed regulation.' },
+  { term: 'Independently excited motor', topic: 'motor_control', def: 'Field powered from a separate controlled supply, independent of the armature — allows separate control of flux and armature current/torque.' },
+  { term: 'H-bridge', topic: 'motor_control', def: 'Four-switch topology around a motor enabling bidirectional current flow for forward/reverse and 2- or 4-quadrant control, normally PWM driven.', svg: SVG.hbridge },
+  { term: 'Bipolar PWM', topic: 'motor_control', def: 'H-bridge scheme: output switches fully between +V and −V every cycle. Duty cycle sets the average value and encodes direction. Current always flows.' },
+  { term: 'Unipolar PWM', topic: 'motor_control', def: 'H-bridge scheme: output switches between +V/0 (CW) or −V/0 (CCW) — lower current ripple than bipolar PWM.' },
+  { term: 'Freewheeling / flyback diode', topic: 'motor_control', def: 'Diode across an inductive load or switch, giving inductor current a path when the switch turns off — prevents large voltage spikes.', svg: SVG.flyback },
+  { term: 'SCR / Thyristor', topic: 'motor_control', def: 'Four-layer PNPN device (anode, cathode, gate). Once gate-triggered with forward bias, it latches ON — even after the gate pulse is gone — and turns OFF only when current drops below the holding current IH.', svg: SVG.thyristor },
+  { term: 'Holding current (IH) / Latching current (IL)', topic: 'motor_control', def: 'IH = minimum anode current to keep a thyristor conducting. IL = minimum current right after triggering needed to latch into full conduction (IL > IH).' },
+  { term: 'Forward breakover voltage (VBO)', topic: 'motor_control', def: 'Anode-cathode voltage at which an UNtriggered thyristor spontaneously switches into conduction, with no gate pulse needed.' },
+  { term: 'CR-PWM chopper', topic: 'motor_control', def: 'Current-regulated PWM chopper driving a DC motor from a DC grid, with nested speed and current control loops plus tacho feedback.' },
+  { term: 'Motor electromechanical time constant (τ)', topic: 'motor_control', def: 'Combining T=Kt·I, Uind=Ke·ω, and J·dω/dt = T − Tfriction − Tload − D·ω gives a 1st-order system: τ = J / (D + Kt·Ke/R) — how fast speed settles after a step.' },
+  { term: 'Damping coefficient (D)', topic: 'motor_control', def: 'Coefficient [N·m/(rad/s)] of torque opposing motion proportionally to speed (viscous-like friction): enters the equation of motion as D·ω.' },
+  { term: 'Moment of inertia (J)', topic: 'motor_control', def: 'Resistance of a rotating body to angular acceleration: J = ∫R²dm. Solid cylinder: J = m·R²/2. Hollow cylinder: J = (m/2)(R₁² + R₂²).' },
+  { term: 'Equivalent inertia (Jeq)', topic: 'motor_control', def: 'Total inertia "seen" by a motor driving a load through a gearbox/pulley/belt: Jeq = J_motor + J_load/N² for a geared system.' },
+  { term: 'Gear reduction ratio (N)', topic: 'motor_control', def: 'Ratio of input to output angular velocity, N = ω1/ω2. Used to scale torque (×N) and reflected inertia (÷N²) between motor and load sides.' },
+  { term: 'Inertia matching', topic: 'motor_control', def: 'Best dynamic performance is achieved when motor inertia JM equals the load inertia reflected through the gear ratio: JM = JL/N².' },
+  { term: 'Motor torque equation (Tm − Tl = J·dω/dt)', topic: 'motor_control', def: 'Newton\'s 2nd law for rotation: net torque (motor minus load) equals inertia times angular acceleration.' },
+  { term: 'Field Oriented Control (FOC)', topic: 'motor_control', def: 'Controls torque directly by decomposing stator currents into d-q components aligned with rotor flux, instead of just controlling current magnitude — used in SRM/sync. reluctance motors.' },
+
+  // ── DRIVE SYSTEMS ────────────────────────────────────────
+  { term: 'Two-quadrant / Four-quadrant operation', topic: 'drive_systems', def: 'Two-quadrant: motoring + regen braking in one rotation direction. Four-quadrant: motoring AND braking/generating in BOTH rotation directions.' },
+  { term: 'Anti-parallel bridges (4-quadrant drive)', topic: 'drive_systems', def: 'Two oppositely connected thyristor bridges feed the same DC motor, current can flow either way without circulating current; a switch-over block ensures only one bridge conducts at a time.' },
+  { term: 'SMPS drive structure', topic: 'drive_systems', def: 'A typical AC drive (line filter → rectifier → DC bus capacitor → brake chopper → inverter) is functionally a Switch Mode Power Supply regulating bidirectional energy flow.' },
+  { term: 'Three-phase inverter (VSD)', topic: 'drive_systems', def: 'Rectifier + DC bus + inverter (six switches, three half-bridges) synthesizes a variable-frequency, variable-voltage 3-phase output from the DC bus, usually via PWM.' },
+  { term: 'PWM sine approximation', topic: 'drive_systems', def: 'A variable-frequency inverter approximates a sine output by PWM-modulating a higher-frequency carrier so the pulse average traces the desired lower-frequency sine wave.' },
+  { term: 'PFC (Power Factor Correction)', topic: 'drive_systems', def: 'Boost-converter front end shaping input current to follow input voltage — improves power factor, reduces harmonics, via nested voltage/current control loops driving a PWM switch.' },
+  { term: 'N² law (gearbox reflected inertia)', topic: 'drive_systems', def: 'Output-side inertia Jout, reflected to a gearbox input with ratio n:1, appears as Jout/n². Torque scales by n, angular acceleration by 1/n.', svg: SVG.n2 },
+  { term: 'Gearbox power/torque/speed relations', topic: 'drive_systems', def: 'For ideal gearbox ratio n:1: ω_out = ω_in/n, T_out = T_in × n. Power = T × ω is conserved (ideal, lossless case).' },
+  { term: 'Thyristor characteristic curve', topic: 'drive_systems', def: 'High impedance OFF-state until gate trigger or breakover voltage (VBO) reached, then snaps to low-impedance conduction. IL needed right after trigger, IH is the lower threshold to stay ON.' },
+  { term: 'Thyristor vs MOSFET', topic: 'drive_systems', def: 'MOSFETs: faster switching, lower switching losses. Thyristors: lower conduction losses, higher power handling — still dominant at multi-kV/kA power levels.' },
+  { term: 'Thyristor family (TRIAC, GTO, MCT, LASCR, RCT)', topic: 'drive_systems', def: 'TRIAC = bidirectional AC switch. GTO/MCT = gate turn-off without current commutation. LASCR = light-triggered. RCT = reverse-conducting.' },
+  { term: 'Series inductance in PWM motor drives', topic: 'drive_systems', def: 'An inductor in series with the motor smooths PWM-chopped voltage into smoother current. Larger L → less ripple, but must avoid core saturation at peak current.' },
+  { term: 'DC motor driven from 3-phase AC grid', topic: 'drive_systems', def: 'A DC motor can be powered via a controlled thyristor rectifier bridge whose firing angle sets the average DC output voltage, with nested speed/current loops.' },
+  { term: 'Why 3-phase power', topic: 'drive_systems', def: 'Balanced 3-phase needs no neutral, gives constant instantaneous power (unlike pulsating single-phase), and rectifies to a higher, smoother average DC voltage. Phases 120° apart.' },
+
+  // ── INTERFACING ──────────────────────────────────────────
+  { term: 'BJT switch', topic: 'interfacing', def: 'BJT driven between cutoff (Vce ≈ Vcc, off) and saturation (Ic_sat = Vcc/Rc, on) by base current. Common way to drive a relay from low-power logic.' },
+  { term: 'MOSFET switch (N/P-channel)', topic: 'interfacing', def: 'N-MOSFET: switches load to ground when Vgs sufficiently positive (low-side). P-MOSFET: switches load to supply when Vgs sufficiently negative (high-side).' },
+  { term: 'Source vs Sink (digital output)', topic: 'interfacing', def: 'Sourcing output: drives current OUT into the load when high. Sinking output: pulls current FROM the load to ground when low.' },
+  { term: 'Open collector output', topic: 'interfacing', def: 'Output with the collector unconnected — needs an external pull-up. Sinks current when ON, sources through the pull-up when OFF. Enables level shifting between voltage domains.' },
+  { term: 'General-purpose digital input circuit', topic: 'interfacing', def: 'Typical protected input: series + pull-down resistor set threshold, clamp diodes to Vcc/GND for overvoltage protection, filter cap, then Schmitt-trigger buffer. Typical: logic 0 < 0.7V, logic 1 > 2.4V.' },
+  { term: 'Digital input level shifter', topic: 'interfacing', def: 'Converts higher-voltage logic (e.g. 24V) to a lower level (e.g. 3.3V) via resistor divider + clamp diodes into a comparator with hysteresis, then an inverter.' },
+  { term: 'Opto-coupler (opto-isolator)', topic: 'interfacing', def: 'LED + photodetector (phototransistor/darlington/SCR/triac), optically coupled but electrically isolated — transmits a signal across a galvanic isolation barrier with no direct connection.', svg: SVG.optocoupler },
+  { term: 'Photo-darlington / Photo-SCR / Photo-triac', topic: 'interfacing', def: 'Opto-isolator variants where the LED\'s light controls a darlington pair (more current gain), an SCR, or a triac — for switching AC/DC power loads with isolation.' },
+  { term: 'Solid State Relay (SSR)', topic: 'interfacing', def: 'Replaces a mechanical relay: opto-isolated input drives a power semiconductor output (transistor for DC, thyristor/triac for AC) — silent, wear-free, with isolation.' },
+  { term: 'Zero-crossing detector (SSR)', topic: 'interfacing', def: 'Delays SSR turn-on until the AC voltage crosses zero, suppressing inrush current and limiting dV/dt stress. Max turn-off delay = one half cycle.' },
+  { term: 'RS-422 differential encoder interface', topic: 'interfacing', def: 'Differential signaling standard for encoder signals (A,/A,B,/B,Z,/Z) for noise immunity; single-ended outputs can be adapted via a resistor bias network.' },
+  { term: 'CMOS inverter', topic: 'interfacing', def: 'Logic inverter from complementary PMOS (pull-up to VDD) and NMOS (pull-down to GND) — only one conducts at a time → low static power, rail-to-rail swing.' },
+  { term: 'Galvanic isolation', topic: 'interfacing', def: 'Electrical separation between circuits via an optical, magnetic, or other non-conductive coupling instead of a direct wire connection — breaks ground loops, allows safe level shifting.', svg: SVG.optocoupler },
+  { term: 'Comparator with hysteresis (Schmitt trigger)', topic: 'interfacing', def: 'Positive feedback creates two different switching thresholds (upper/lower) — prevents output chatter when a noisy input hovers near a single threshold.' },
+
+  // ── MOTION CONTROLLERS / CONTROL ────────────────────────
+  { term: 'P-loop (proportional)', topic: 'motion_controllers', def: 'Position error e × Kp drives the motor. Simplest servo loop — fast, but leaves a steady-state error.', svg: SVG.pidloop },
+  { term: 'PI-loop', topic: 'motion_controllers', def: 'Adds an integral term (∫e × Ki) to the proportional term — eliminates steady-state error, but can introduce instability/overshoot if not tuned.' },
+  { term: 'PID-loop', topic: 'motion_controllers', def: 'Adds a derivative term (de/dt × Kd) for damping that reduces oscillation/overshoot, on top of P (speed) and I (zero steady-state error).' },
+  { term: 'Integral windup', topic: 'motion_controllers', def: 'When output is saturated and error persists, the integral term keeps growing. When the setpoint is finally reached the oversized term causes large overshoot. Prevented by clamping/back-calculation.' },
+  { term: 'Servo cycle', topic: 'motion_controllers', def: 'Fixed time interval (e.g. 100 µs) at which a motion controller samples position, computes following error, and updates the output.' },
+  { term: 'Following error', topic: 'motion_controllers', def: 'Instantaneous difference between commanded (trajectory) position and actual measured position — the error signal driving the servo loop.' },
+  { term: 'Trajectory generator', topic: 'motion_controllers', def: 'Module that computes the desired position/velocity/acceleration profile over time, fed to the servo controller.' },
+  { term: 'Velocity feedforward', topic: 'motion_controllers', def: 'Pre-commands the motor based on desired velocity (Kvff × dθd/dt), added to the PID output — reduces following error without relying solely on high loop gain.' },
+  { term: 'Trapezoidal velocity profile', topic: 'motion_controllers', def: 'Constant acceleration → constant velocity (cruise) → constant deceleration. Fastest profile for given vmax/amax limits, but abrupt accel transitions (high jerk).', svg: SVG.trapezoid },
+  { term: 'S-curve (S-ramp) motion profile', topic: 'motion_controllers', def: 'Smoothed acceleration ramps limit jerk — gentler on mechanics than trapezoidal, but slower for the same vmax/amax.', svg: SVG.scurve },
+  { term: 'Jerk', topic: 'motion_controllers', def: 'Rate of change of acceleration (3rd derivative of position). Limiting jerk reduces mechanical stress and vibration.' },
+  { term: 'Synchronized motion', topic: 'motion_controllers', def: 'Multiple axes start and stop together at coordinated points, though they may move at different speeds in between.' },
+  { term: 'Non-interpolated motion', topic: 'motion_controllers', def: 'Axes move simultaneously but independently — each has its own start/stop timing, uncoordinated.' },
+  { term: 'Linear interpolation', topic: 'motion_controllers', def: 'Controller coordinates multi-axis speeds so combined motion traces a straight line between two points.' },
+  { term: 'Circular interpolation', topic: 'motion_controllers', def: 'Coordinating sinusoidal speed profiles of two or more axes so the payload moves along a circular path.' },
+  { term: 'Contouring', topic: 'motion_controllers', def: 'Axis speeds vary so the combined path passes smoothly through a sequence of predefined points — speed is defined along the path, not per-axis.' },
+  { term: 'Master/follower motion', topic: 'motion_controllers', def: 'Multiple actuators run an identical profile; a master axis position is the commanded reference for follower axis controllers (e.g. parallel gantry rails).' },
+  { term: 'Cascaded velocity/position control', topic: 'motion_controllers', def: 'Nested loops: outer position loop sets a velocity setpoint for the inner velocity loop, which sets a current setpoint for the innermost current loop. Each inner loop closes faster.', svg: SVG.pidloop },
+  { term: 'Current loop (inner loop)', topic: 'motion_controllers', def: 'Fastest, innermost loop in a cascaded controller — regulates motor current (and thus torque).' },
+  { term: 'Limit switch', topic: 'motion_controllers', def: 'Switch at the travel extremes of an axis that stops motion to prevent mechanical damage; often paired with a diode allowing reversal back off the limit.' },
+  { term: 'Home switch', topic: 'motion_controllers', def: 'Defines a reference (zero) position on an axis, used during homing to establish absolute position reference.' },
+  { term: 'Observer (motor control)', topic: 'motion_controllers', def: 'Model-based estimator predicting velocity from motor current and position, useful when the position sensor has low resolution — only as good as the underlying mechanical model.' },
+  { term: 'Overshoot', topic: 'motion_controllers', def: 'Amount by which a step response exceeds its final target before settling — a sign of an underdamped system.' },
+  { term: 'Underdamped / critically damped / overdamped', topic: 'motion_controllers', def: 'Underdamped: oscillates before settling. Critically damped: settles fastest with no oscillation. Overdamped: settles slowly, no overshoot.' },
+
+  // ── CONTROL BASICS ───────────────────────────────────────
+  { term: 'Open loop control', topic: 'control_basics', def: 'Input drives the process directly with no feedback or correction for the actual output — vulnerable to disturbances.' },
+  { term: 'Closed loop control', topic: 'control_basics', def: 'Actual output is measured and compared to the desired value, generating an error signal used to correct the system — improves accuracy against disturbances.' },
+  { term: 'Comparator (control system)', topic: 'control_basics', def: 'Summing element that subtracts the feedback (actual) value from the reference (desired) value to generate the error signal ε.' },
+  { term: 'Feedback control system (canonical form)', topic: 'control_basics', def: 'ε(s) = R(s) − H(s)·C(s). R = reference, C = output, G(s) = forward transfer function, H(s) = feedback transfer function.' },
+  { term: 'Disturbance input', topic: 'control_basics', def: 'Unwanted input (e.g. changing load) affecting the output independently of the reference — the closed loop tries to compensate for it.' },
+  { term: 'Noise input', topic: 'control_basics', def: 'Unwanted signal corrupting the measured output (e.g. sensor noise) before it reaches the controller via feedback.' },
+  { term: 'Hydraulic drive system', topic: 'control_basics', def: 'Pressurized fluid drive: high force, very high energy density, good safety — but needs a central high-pressure supply and has poor overall efficiency.' },
+  { term: 'Pneumatic drive system', topic: 'control_basics', def: 'Compressed air drive: easy fast linear motion, good for explosive atmospheres — but poor positional accuracy and poor overall efficiency.' },
+  { term: 'Electric drive system', topic: 'control_basics', def: 'Electric motor drive: very good efficiency, low cost, very good intelligent control — though lower energy density than hydraulics.' },
+
+  // ── ROBOTICS / KINEMATICS ────────────────────────────────
+  { term: 'Forward kinematics', topic: 'robotics', def: 'Calculating end-effector position/orientation given known joint angles/positions.' },
+  { term: 'Inverse kinematics', topic: 'robotics', def: 'Calculating the joint angles/positions needed to put the end-effector at a desired (x,y,z) point.' },
+  { term: 'Limited sequence control', topic: 'robotics', def: 'Robot performs a fixed repeated pick-and-place/push sequence (A→B→C→repeat) without stored trajectories.' },
+  { term: 'Point-to-point control (PTP)', topic: 'robotics', def: 'Controller drives the actuator to specified target points without controlling the exact path between them.' },
+  { term: 'Continuous-path control (CP)', topic: 'robotics', def: 'The entire trajectory between points is controlled, not just endpoints — used for welding, contour following.' },
+  { term: 'Cartesian robot (PPP)', topic: 'robotics', def: 'Three prismatic (linear) joints along orthogonal X/Y/Z — rectangular (gantry-style) workspace.' },
+  { term: 'Cylindrical robot (RPP)', topic: 'robotics', def: 'One rotational joint + two prismatic joints — cylindrical workspace.' },
+  { term: 'Polar/spherical robot (RRP)', topic: 'robotics', def: 'Two rotational joints + one prismatic joint — spherical workspace.' },
+  { term: 'Jointed arm / articulated manipulator (RRR)', topic: 'robotics', def: 'Three rotational joints (body, shoulder, elbow) mimicking a human arm — large flexible workspace.' },
+
+  // ── COMMUNICATION ────────────────────────────────────────
+  { term: 'EtherCAT', topic: 'communication', def: 'High-speed real-time industrial Ethernet (Beckhoff). Each slave processes the frame on-the-fly as it passes through — deterministic, < 1 µs latency per slave, no switch needed.' },
+  { term: 'PROFIBUS / PROFINET', topic: 'communication', def: 'Siemens industrial fieldbus / Ethernet-based protocols for connecting PLCs, drives, and I/O.' },
+  { term: 'MODBUS', topic: 'communication', def: 'Schneider Electric protocol, variants: TCP/IP, ASCII, PLUS, RTU — used to connect controllers and field devices.' },
+  { term: 'DeviceNet', topic: 'communication', def: 'Allen-Bradley/Rockwell network using a trunkline-dropline topology to connect sensors/actuators to a controller.' },
+  { term: 'EtherNet/IP', topic: 'communication', def: 'Layers an explicit/implicit "industrial protocol" messaging layer on top of standard Ethernet/IP/TCP-UDP, following the OSI model.' },
+  { term: 'Master/slave (provider/consumer)', topic: 'communication', def: 'One device (master) initiates and controls communication; others (slaves) respond — vs peer-to-peer or broadcast schemes.' },
+  { term: 'Interoperability', topic: 'communication', def: 'Ability of devices from different manufacturers to communicate correctly over a shared network protocol/physical standard.' },
+  { term: 'RS-485', topic: 'communication', def: 'Differential multi-drop bus, 32+ nodes, up to ~1200 m — common industrial fieldbus physical layer.' },
+  { term: 'SSI (Synchronous Serial Interface)', topic: 'communication', def: 'Master generates the clock; encoder shifts out position bits synchronously, one per clock edge. Point-to-point only.' },
+  { term: 'CAN bus', topic: 'communication', def: 'Multi-master differential bus, up to 1 Mbit/s. Message-based with priority arbitration (lowest ID wins). Not hard real-time but deterministic enough for many drives.' },
+
+  // ── SAFETY ────────────────────────────────────────────────
+  { term: 'STO (Safe Torque Off)', topic: 'safety', def: 'IEC 61800-5-2 safety function: removes gate drive signals to power transistors so no torque can be generated. Motor coasts; DC bus stays charged. Does NOT apply the brake or disconnect mains.' },
+  { term: 'Safety relay', topic: 'safety', def: 'Device implementing safety functions that, on detecting a hazard/error, initiates a safe, reliable response to reduce risk (e.g. Pilz myPNOZ).' },
+  { term: 'Two-button press (safety)', topic: 'safety', def: 'Requiring simultaneous two-hand button activation ensures both operator hands are known to be away from a hazard zone.' },
+  { term: 'Pressure-sensitive safety mat', topic: 'safety', def: 'Detects presence of a person/object via weight, used to stop hazardous machine motion.' },
+  { term: 'Stop cord (pull-cord switch)', topic: 'safety', def: 'A cord running along a hazardous machine that, when pulled, triggers an emergency stop — addresses drawing-in hazards.' },
+  { term: 'Risk rating / safety analysis matrix', topic: 'safety', def: 'Combines likelihood of injury and severity of consequence to classify risk level (low/moderate/high/extreme).' },
+  { term: 'FMEA (Failure Mode and Effects Analysis)', topic: 'safety', def: 'Systematic method evaluating failure modes, causes, probability, and severity to prioritize safety mitigations.' },
+  { term: 'Interlock', topic: 'safety', def: 'Prevents simultaneous occupation of the same space by machine and human, e.g. a guard door switch disabling motion when opened.' },
+  { term: 'Light curtain / light beam sensor', topic: 'safety', def: 'Transmitter-receiver pair detecting intrusion into a hazardous zone, triggering a stop.' },
+  { term: 'Entrapment/entanglement hazard', topic: 'safety', def: 'Body part or clothing pinched/crushed as machine parts (gears, rollers) move together.' },
+  { term: 'Contact hazard', topic: 'safety', def: 'Arises from contact with hot surfaces, sharp edges, or live electrical components.' },
+  { term: 'Impact hazard', topic: 'safety', def: 'A person strikes a machine, or a moving machine part strikes a person.' },
+  { term: 'Ejection hazard', topic: 'safety', def: 'Material or a loose component is thrown out from the machine, potentially striking nearby people.' },
+  { term: 'Semiconductor (fast-blow) fuse', topic: 'safety', def: 'Ultra-fast current-limiting fuse interrupting fault current within microseconds — fast enough to protect transistors/diodes from short-circuit destruction.' },
+  { term: 'SPST/SPDT/DPST/DPDT', topic: 'safety', def: 'Switch terminology: Single/Double Pole = number of separate circuits switched. Single/Double Throw = number of positions/connections per pole.' },
+
+  // ── EMC ───────────────────────────────────────────────────
+  { term: 'EMC (Electromagnetic Compatibility)', topic: 'emc', def: 'Ability of a system to function correctly in its EM environment without causing unacceptable interference to others, and without being unacceptably affected by interference from others.' },
+  { term: 'EMI (Electromagnetic Interference)', topic: 'emc', def: 'Unwanted EM energy disrupting electronic equipment — modeled as a disturbance source, a coupling path, and a susceptible victim.' },
+  { term: 'Source–victim–coupling path model', topic: 'emc', def: 'Fundamental EMC model: a source emits EM energy, a coupling path transfers it, a victim is disturbed by it.' },
+  { term: 'Skin effect', topic: 'emc', def: 'At high frequency, AC current concentrates near the conductor surface (eddy currents oppose flow in the center) — increases effective AC resistance.', svg: SVG.skineffect },
+  { term: 'Skin depth (δ)', topic: 'emc', def: 'Depth at which AC current density falls to 1/e (~37%) of surface value: δ = √(2ρ/(ωμ)). Higher frequency → smaller δ → higher AC resistance.' },
+  { term: 'Litz wire', topic: 'emc', def: 'Many thin, individually insulated, woven strands sharing current equally — mitigates skin/proximity effects from a few kHz up to ~1 MHz.' },
+  { term: 'Proximity effect', topic: 'emc', def: 'Extra AC resistance increase from magnetic field interaction between nearby current-carrying conductors, beyond skin effect alone.' },
+  { term: 'Common-mode (CM) current', topic: 'emc', def: 'Unwanted current flowing in the SAME direction on both conductors of a cable relative to ground — a primary cause of EMC problems.', svg: SVG.cmdm },
+  { term: 'Differential mode (DM) signal/current', topic: 'emc', def: 'The intended signal current flowing in OPPOSITE directions on the two conductors of a circuit — carries the wanted information.', svg: SVG.cmdm },
+  { term: 'Narrow band vs wideband disturbance', topic: 'emc', def: 'Narrow band: energy concentrated at discrete frequencies (radio transmitters, microprocessors). Wideband: energy spread continuously (relay contacts, transients).' },
+  { term: 'EMC margin', topic: 'emc', def: 'Regulatory gap between max permitted emission level and min required immunity level, per frequency-dependent CE standards (e.g. EN61000-6 series).' },
+  { term: 'Characteristic impedance (Z0)', topic: 'emc', def: 'Z0 = √(L/C) — the impedance a long cable presents to a propagating signal. Matching termination to Z0 prevents reflections.' },
+  { term: 'Capacitive coupling / crosstalk', topic: 'emc', def: 'Unwanted signal transfer between conductors via parasitic capacitance — a high-pass coupling path. Mitigated by shielding or coax cable.' },
+  { term: 'Shielding (EMC)', topic: 'emc', def: 'Surrounding a signal conductor with a grounded conductive layer to divert coupled current to ground instead of into the victim conductor.' },
+  { term: 'Ground loop', topic: 'emc', def: 'Closed conductive loop formed when two grounded devices share both a signal cable AND separate earth connections — encloses an area that picks up CM disturbance via induced common-mode voltage.', svg: SVG.groundloop },
+  { term: 'Common-mode voltage (Vcm)', topic: 'emc', def: 'Unwanted voltage appearing equally on both signal conductors relative to ground, often from a ground loop, driving common-mode current.' },
+  { term: 'Galvanic isolation (EMC context)', topic: 'emc', def: 'Isolation transformer or opto-coupler electrically separates two circuit grounds so no direct conductive path exists — breaks ground loops, blocks CM current.' },
+  { term: 'Transmission line', topic: 'emc', def: 'A cable modeled as distributed R\'/L\'/G\'/C\' per unit length rather than lumped elements — needed when signal travel time is significant vs. the signal\'s rate of change.' },
+  { term: 'Reflection coefficient (Γ)', topic: 'emc', def: 'Γ = (ZL−Z0)/(ZL+Z0) — ratio of reflected to incident wave at a termination. Γ=0 (no reflection) when load impedance matches Z0.' },
+  { term: 'Near field vs far field', topic: 'emc', def: 'Near field: close to source, E and H fields interact locally (reactive/Fresnel). Far field: at distance, E and H sustain each other as a propagating EM wave.' },
+  { term: 'Velocity factor', topic: 'emc', def: 'Ratio of a cable\'s signal propagation speed to the speed of light in vacuum — always < 1, depends on dielectric (εr, μr).' },
+  { term: 'Wavelength rule-of-thumb (λ/10)', topic: 'emc', def: 'If cable length > λ/10, model as a transmission line; if shorter, a lumped RLC network is adequate.' },
+  { term: 'Parasitic ESL/ESR (real components)', topic: 'emc', def: 'Real capacitors have series resistance (ESR) and series inductance (ESL) — behave inductively above resonance. Real inductors have parasitic parallel capacitance — behave capacitively above resonance.' }
+];
+
+const state = { selected: new Set(Object.keys(GLOSSARY_TOPICS)), pool: [], done: [], total: 0, flipped: false };
+
+function renderPicker() {
+  const list = document.getElementById('topic-list');
+  list.innerHTML = '';
+  Object.entries(GLOSSARY_TOPICS).forEach(([slug, meta]) => {
+    const count = GLOSSARY.filter(g => g.topic === slug).length;
+    const row = document.createElement('div');
+    row.className = 'topic-row' + (state.selected.has(slug) ? ' selected' : '');
+    row.innerHTML = `<span class="icon">${meta.icon}</span><span class="name">${meta.label}</span>
+      <span class="count">${count}</span><span class="check"></span>`;
+    row.addEventListener('click', () => {
+      if (state.selected.has(slug)) state.selected.delete(slug); else state.selected.add(slug);
+      renderPicker();
+    });
+    list.appendChild(row);
+  });
+  const n = GLOSSARY.filter(g => state.selected.has(g.topic)).length;
+  const startBtn = document.getElementById('btn-start');
+  startBtn.textContent = `Start (${n})`;
+  startBtn.disabled = n === 0;
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startDeck() {
+  const cards = GLOSSARY.filter(g => state.selected.has(g.topic));
+  state.pool = shuffle(cards);
+  state.done = [];
+  state.total = state.pool.length;
+  document.getElementById('screen-picker').style.display = 'none';
+  document.getElementById('screen-done').style.display = 'none';
+  document.getElementById('screen-cards').style.display = 'flex';
+  renderCard();
+}
+
+function renderCard() {
+  if (state.pool.length === 0) { renderDone(); return; }
+  state.flipped = false;
+  const card3d = document.getElementById('card-3d');
+  card3d.classList.remove('flipped');
+  document.getElementById('deck-actions').classList.add('hidden');
+
+  const g = state.pool[0];
+  const meta = GLOSSARY_TOPICS[g.topic];
+  document.getElementById('topic-badge-f').textContent = meta.icon + ' ' + meta.label;
+  document.getElementById('topic-badge-b').textContent = meta.icon + ' ' + meta.label;
+  document.getElementById('term-text').textContent = g.term;
+  document.getElementById('def-text').textContent = g.def;
+  document.getElementById('svg-holder').innerHTML = g.svg || '';
+
+  document.getElementById('deck-counter').textContent = `${state.done.length} / ${state.total}`;
+  document.getElementById('deck-remaining').textContent = `${state.pool.length} left`;
+  document.getElementById('progress-fill').style.width = (state.done.length / state.total * 100) + '%';
+}
+
+function flip() {
+  state.flipped = !state.flipped;
+  document.getElementById('card-3d').classList.toggle('flipped', state.flipped);
+  document.getElementById('deck-actions').classList.toggle('hidden', !state.flipped);
+}
+
+function gotIt() {
+  const g = state.pool.shift();
+  state.done.push(g);
+  renderCard();
+}
+function again() {
+  const g = state.pool.shift();
+  state.pool.push(g);
+  renderCard();
+}
+
+function renderDone() {
+  document.getElementById('screen-cards').style.display = 'none';
+  document.getElementById('screen-done').style.display = 'flex';
+  document.getElementById('done-stats').textContent = `You reviewed ${state.total} terms.`;
+  document.getElementById('progress-fill').style.width = '100%';
+}
+
+document.getElementById('card-scene').addEventListener('click', flip);
+document.getElementById('btn-gotit').addEventListener('click', e => { e.stopPropagation(); gotIt(); });
+document.getElementById('btn-again').addEventListener('click', e => { e.stopPropagation(); again(); });
+document.getElementById('btn-start').addEventListener('click', startDeck);
+document.getElementById('btn-select-all').addEventListener('click', () => {
+  const allSlugs = Object.keys(GLOSSARY_TOPICS);
+  const allSelected = allSlugs.every(s => state.selected.has(s));
+  state.selected = allSelected ? new Set() : new Set(allSlugs);
+  renderPicker();
+});
+document.getElementById('btn-restart').addEventListener('click', () => {
+  document.getElementById('screen-done').style.display = 'none';
+  document.getElementById('screen-picker').style.display = 'flex';
+});
+document.getElementById('btn-home').addEventListener('click', () => {
+  document.getElementById('screen-done').style.display = 'none';
+  document.getElementById('screen-picker').style.display = 'flex';
+});
+
+renderPicker();
+</script>
+</body>
+</html>
