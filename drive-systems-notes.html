@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDS4 Drive Systems — Full Notes</title>
+<style>
+  :root {
+    --bg: #ffffff; --ink: #1a1a1a; --sub: #555; --accent: #2563eb;
+    --red: #dc2626; --green: #16a34a; --amber: #d97706; --bgcard: #f8f9fb; --border: #e5e7eb;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--ink); background: var(--bg); line-height: 1.6; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 18px 80px; }
+  h1 { font-size: 26px; margin-bottom: 4px; }
+  .subtitle { color: var(--sub); margin-top: 0; margin-bottom: 24px; }
+  h2 { font-size: 21px; margin-top: 48px; padding-top: 12px; border-top: 3px solid var(--accent); }
+  h3 { font-size: 17px; margin-top: 28px; color: var(--accent); }
+  p { margin: 8px 0; }
+  .box { background: var(--bgcard); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin: 14px 0; }
+  .box.green { background: #f0fdf4; border-color: var(--green); }
+  .box.amber { background: #fffbeb; border-color: var(--amber); }
+  .box.red { background: #fef2f2; border-color: var(--red); }
+  .label { font-weight: 700; }
+  .diagram { display: flex; justify-content: center; margin: 16px 0; }
+  .diagram svg { max-width: 100%; height: auto; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13.5px; }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--bgcard); font-weight: 700; }
+  .good { color: var(--green); font-weight: 600; }
+  .bad { color: var(--red); font-weight: 600; }
+  .toc { background: var(--bgcard); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; }
+  .toc a { display: block; padding: 4px 0; color: var(--accent); text-decoration: none; font-size: 14px; }
+  .toc a:hover { text-decoration: underline; }
+  code { background: #f1f1f1; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+  .step { background: #eff6ff; border: 1px solid var(--accent); border-radius: 8px; padding: 10px 14px; margin: 10px 0; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+  .trap { background: #fef2f2; border: 1px solid var(--red); border-radius: 10px; padding: 12px 16px; margin: 10px 0; }
+  .trap .tag { display: inline-block; background: var(--red); color: white; font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 12px; margin-bottom: 6px; text-transform: uppercase; }
+  .variant { background: #faf5ff; border: 1px solid #9333ea; border-radius: 10px; padding: 12px 16px; margin: 10px 0; }
+  .variant .tag { display: inline-block; background: #9333ea; color: white; font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 12px; margin-bottom: 6px; text-transform: uppercase; }
+  .recurring { background: #fffbeb; border: 1px solid var(--amber); border-radius: 10px; padding: 12px 16px; margin: 10px 0; }
+  .recurring .tag { display: inline-block; background: var(--amber); color: white; font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 12px; margin-bottom: 6px; text-transform: uppercase; }
+  .honest { background: #f5f3ff; border: 1px solid #7c3aed; border-radius: 10px; padding: 12px 16px; margin: 10px 0; }
+  .honest .tag { display: inline-block; background: #7c3aed; color: white; font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 12px; margin-bottom: 6px; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>EDS4 — Drive Systems, full notes</h1>
+<p class="subtitle">Gearbox N² rule, inertia matching, drive technology comparison — with an honest note on what's actually been tested.</p>
+
+<div class="honest"><span class="tag">Heads up</span>
+<p>This topic has its own dedicated lecture (gearbox/N²), but barely shows up directly in the 4 past exams I scanned — only one recurring True/False on electrical vs pneumatic/hydraulic efficiency. That does NOT mean skip it: it's exactly the kind of foundational topic that gets <b>combined</b> into a motor-control or thermal open question (e.g. "a motor drives a load through a gearbox — find the required motor torque"), or could appear standalone on a different exam paper. Know the mechanism, not just the one recurring statement.</p>
+</div>
+
+<div class="toc">
+  <a href="#gearbox">1. The gearbox N² rule — why inertia and torque scale differently</a>
+  <a href="#matching">2. Inertia matching</a>
+  <a href="#worked">3. Worked example (full chain: inertia, torque, acceleration)</a>
+  <a href="#compare-drives">4. Electrical vs pneumatic vs hydraulic drive systems</a>
+  <a href="#quadrant">5. Four-quadrant drives (anti-parallel bridges)</a>
+  <a href="#traps">6. Exam trap library</a>
+  <a href="#variants">7. How these questions could be tweaked</a>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="gearbox">1. The gearbox N² rule</h2>
+
+<div class="diagram">
+<svg viewBox="0 0 420 200" xmlns="http://www.w3.org/2000/svg">
+<ellipse cx="70" cy="100" rx="45" ry="45" fill="#eff6ff" stroke="#2563eb" stroke-width="3"/>
+<text x="70" y="95" text-anchor="middle" font-size="13" fill="#2563eb">Motor</text>
+<text x="70" y="112" text-anchor="middle" font-size="11" fill="#2563eb">ω_m, T_m</text>
+<rect x="155" y="65" width="110" height="70" rx="10" fill="#fefce8" stroke="#d97706" stroke-width="3"/>
+<text x="210" y="95" text-anchor="middle" font-size="14" fill="#92400e">Gearbox</text>
+<text x="210" y="115" text-anchor="middle" font-size="12" fill="#92400e">ratio N : 1</text>
+<ellipse cx="360" cy="100" rx="50" ry="50" fill="#f0fdf4" stroke="#16a34a" stroke-width="3"/>
+<text x="360" y="95" text-anchor="middle" font-size="13" fill="#15803d">Load</text>
+<text x="360" y="112" text-anchor="middle" font-size="11" fill="#15803d">ω_L, T_L, J_L</text>
+<line x1="115" y1="100" x2="155" y2="100" stroke="#1a1a1a" stroke-width="3"/>
+<line x1="265" y1="100" x2="310" y2="100" stroke="#1a1a1a" stroke-width="3"/>
+</svg>
+</div>
+
+<p>Define <b>N = ω_motor / ω_load</b> (how many times faster the motor spins than the output shaft). A real gearbox is (approximately) lossless, so power in = power out: P = T × ω stays the same on both sides.</p>
+
+<div class="step"><b>Speed:</b> ω_load = ω_motor / N — the gearbox divides speed down by N.</div>
+<div class="step"><b>Torque:</b> T_load = T_motor × N — torque is multiplied UP by N (this is the whole point of a gearbox — trade speed for torque).</div>
+<div class="step"><b>Reflected torque (seen at the motor):</b> T_reflected = T_load / N — flip the above around to see what torque the motor "feels" from the load.</div>
+
+<h3>Why inertia scales by N², not N</h3>
+<p>This is the part that trips people up. Inertia isn't a force or torque — it's resistance to ANGULAR ACCELERATION (T = J·α). Let's derive it instead of just memorizing it:</p>
+
+<div class="box amber">
+<p>Energy stored in a spinning mass: E = ½ J ω². The load's kinetic energy must "appear" the same whether you calculate it using the load's own (J_L, ω_L) or using an equivalent inertia (J_reflected) spinning at the MOTOR's speed ω_motor (since that's the frame we want to reflect into):</p>
+<p style="text-align:center; font-size:16px;">½ J_L ω_L² &nbsp;=&nbsp; ½ J_reflected ω_motor²</p>
+<p>Substitute ω_L = ω_motor / N:</p>
+<p style="text-align:center; font-size:16px;">½ J_L (ω_motor/N)² = ½ J_reflected ω_motor²</p>
+<p>The ω_motor² cancels from both sides, leaving:</p>
+<p style="text-align:center; font-size:18px; font-weight:700;">J_reflected = J_L / N²</p>
+</div>
+
+<div class="box green">
+<p><b>The intuition in one sentence:</b> speed gets divided by N (linear), but kinetic energy depends on speed SQUARED — so when you "undo" that speed division to compare energies, the inertia has to be divided by N² to make the energy match up.</p>
+</div>
+
+<p>So a high gear ratio makes even a heavy load feel very light to the motor, inertia-wise — but the trade-off is the motor has to spin N times faster to achieve the same output speed, and any torque the motor produces only translates to 1/N of that torque at the load shaft (wait — no, torque MULTIPLIES by N on the output side, re-read the speed/torque box above; reflected torque going the OTHER way, from load to motor, divides by N).</p>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="matching">2. Inertia matching</h2>
+<p>Given a fixed motor (with its own rotor inertia J_m) and a load (J_L) connected through an adjustable gear ratio N, what N gives the best acceleration performance?</p>
+
+<div class="step">Total inertia the motor has to accelerate = J_m + J_reflected = J_m + J_L/N². As N increases, J_reflected shrinks — seems like "more N is always better" at first glance.</div>
+<div class="step">But increasing N also means the motor has to spin faster to get the same output speed, AND any torque limit (max motor torque) gets divided by N before it reaches the load. There's a genuine trade-off, and calculus shows the optimum (fastest acceleration of the load) happens at:</div>
+
+<div class="box green">
+<p style="text-align:center; font-size:18px; font-weight:700;">J_m = J_L / N²&nbsp;&nbsp;(i.e. J_motor = J_reflected)</p>
+<p>In words: pick the gear ratio so the motor's OWN inertia equals the load's REFLECTED inertia. At this point, exactly half the motor's torque output goes into accelerating itself, and half goes into accelerating the (reflected) load — this 50/50 split is what gives the best acceleration for a torque-limited motor.</p>
+</div>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="worked">3. Worked example — the full chain</h2>
+<div class="box">
+<p>A motor (J_m = 0.002 kg·m²) drives a load (J_L = 0.8 kg·m², T_L = 16 N·m constant) through a gearbox with N = 8. Find the motor torque needed to accelerate the system at α_motor = 100 rad/s².</p>
+<p><b>Step 1 — reflect the load inertia:</b> J_reflected = J_L / N² = 0.8 / 64 = 0.0125 kg·m².</p>
+<p><b>Step 2 — total inertia at the motor:</b> J_total = J_m + J_reflected = 0.002 + 0.0125 = 0.0145 kg·m².</p>
+<p><b>Step 3 — torque to accelerate that inertia:</b> T_accel = J_total × α = 0.0145 × 100 = 1.45 N·m.</p>
+<p><b>Step 4 — reflect the load TORQUE (not inertia — divide by N, not N²):</b> T_load_at_motor = T_L / N = 16 / 8 = 2 N·m.</p>
+<p><b>Step 5 — total motor torque required:</b> T_motor = T_accel + T_load_at_motor = 1.45 + 2.0 = <b>3.45 N·m</b>.</p>
+</div>
+<div class="box red">
+<p><b>The single most common mistake:</b> reflecting TORQUE by N² (should be ÷N) or reflecting INERTIA by N (should be ÷N²). They scale differently — keep that straight by re-deriving from energy conservation if you forget, rather than guessing.</p>
+</div>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="compare-drives">4. Electrical vs pneumatic vs hydraulic drive systems</h2>
+<div class="recurring"><span class="tag">Actually recurring on past exams</span>
+<p>This exact True/False pair has appeared multiple times: <i>"Statement 1: pneumatics are interesting from a safety perspective in overload (air is compressible), but that compressibility hurts accurate positioning. Statement 2: electrical drives are often used because efficiency of energy conversion is higher than pneumatic/hydraulic."</i> → Answer: <b>both statements are TRUE.</b></p>
+</div>
+
+<table>
+<tr><th>Property</th><th>Electrical</th><th>Pneumatic</th><th>Hydraulic</th></tr>
+<tr><td><b>Efficiency</b></td><td class="good">Very good (&gt;90%)</td><td class="bad">Poor (~10% — most energy lost compressing air)</td><td>Moderate (~60-70%)</td></tr>
+<tr><td><b>Positioning accuracy</b></td><td class="good">Excellent (closed-loop, encoder feedback)</td><td class="bad">Poor (air is compressible — springy, imprecise)</td><td>Good (with proportional valves)</td></tr>
+<tr><td><b>Force/power density</b></td><td>Moderate</td><td>Low</td><td class="good">Very high (huge force in small volume)</td></tr>
+<tr><td><b>Overload safety behavior</b></td><td>Needs explicit current limiting</td><td class="good">Inherently "soft" — compressible air cushions overload</td><td>Stiff — needs relief valves for overload protection</td></tr>
+<tr><td><b>Typical use</b></td><td>Precision motion, servo positioning</td><td>Simple on/off clamping/actuating, explosive atmospheres</td><td>Very high force (presses, heavy machinery)</td></tr>
+</table>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="quadrant">5. Four-quadrant drives (anti-parallel bridges)</h2>
+<div class="diagram">
+<svg viewBox="0 0 380 220" xmlns="http://www.w3.org/2000/svg">
+<rect x="20" y="20" width="140" height="80" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+<text x="90" y="55" text-anchor="middle" font-size="12" fill="#2563eb">Bridge A</text>
+<text x="90" y="72" text-anchor="middle" font-size="10" fill="#2563eb">(forward direction)</text>
+<rect x="20" y="120" width="140" height="80" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+<text x="90" y="155" text-anchor="middle" font-size="12" fill="#dc2626">Bridge B</text>
+<text x="90" y="172" text-anchor="middle" font-size="10" fill="#dc2626">(reverse direction)</text>
+<ellipse cx="300" cy="110" rx="50" ry="40" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+<text x="300" y="115" text-anchor="middle" font-size="13" fill="#15803d">Motor</text>
+<line x1="160" y1="60" x2="220" y2="60" stroke="#1a1a1a" stroke-width="2"/>
+<line x1="220" y1="60" x2="220" y2="100" stroke="#1a1a1a" stroke-width="2"/>
+<line x1="160" y1="160" x2="220" y2="160" stroke="#1a1a1a" stroke-width="2"/>
+<line x1="220" y1="160" x2="220" y2="120" stroke="#1a1a1a" stroke-width="2"/>
+<line x1="220" y1="110" x2="250" y2="110" stroke="#1a1a1a" stroke-width="2"/>
+<rect x="190" y="85" width="40" height="50" fill="none" stroke="#d97706" stroke-width="2" stroke-dasharray="3,2"/>
+<text x="210" y="78" text-anchor="middle" font-size="9" fill="#92400e">switch-over</text>
+</svg>
+</div>
+<p>Two thyristor bridges, connected so current can flow through the motor in EITHER direction without needing to mechanically reverse anything. A switch-over control block ensures only ONE bridge is actively conducting at any moment (if both conducted simultaneously, current would circulate destructively between them).</p>
+<div class="step">This gives full <b>four-quadrant</b> capability: motoring forward, regen braking from forward, motoring reverse, regen braking from reverse — all from a single drive setup.</div>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="traps">6. Exam trap library</h2>
+
+<div class="trap"><span class="tag">N² trap</span>
+<p>"Reflected torque also scales by N²." → False. Torque scales by N (or 1/N depending on direction). Only INERTIA scales by N² — because inertia relates to energy (∝ ω²), torque doesn't.</p>
+</div>
+
+<div class="trap"><span class="tag">Inertia matching trap</span>
+<p>"More gear reduction is always better for acceleration." → False. There's an optimum (J_motor = J_reflected); past that point, the motor spends too much torque accelerating itself and the trade-off reverses.</p>
+</div>
+
+<div class="trap"><span class="tag">Pneumatic trap</span>
+<p>"Pneumatic systems are bad for positioning AND bad for overload safety." → False — they're bad for positioning (compressibility = imprecise) but actually GOOD for overload safety for the same reason (compressible air cushions sudden overloads).</p>
+</div>
+
+<div class="trap"><span class="tag">Anti-parallel bridge trap</span>
+<p>"Both bridges can conduct simultaneously for faster switching." → False. Simultaneous conduction creates a circulating current path between the two bridges — a switch-over block must ensure only one conducts at a time.</p>
+</div>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="variants">7. How these questions could be tweaked</h2>
+
+<div class="variant"><span class="tag">Variant</span>
+<p><b>Combined motor+gearbox open question.</b> Given motor specs (Kt, Ra, Rth) AND a gearbox+load (N, J_L, T_L), find required motor current/voltage/temperature rise — chains this entire topic into the Motor Control thermal calculation from the previous topic. Always check: does the question mention a gearbox or ratio at all? If so, reflect torque/inertia FIRST, then run the usual motor current → losses → temperature chain.</p>
+</div>
+
+<div class="variant"><span class="tag">Variant</span>
+<p><b>Reverse the unknown.</b> Instead of "find required motor torque," it could give you the motor's MAX torque and ask you to find the MAXIMUM achievable load acceleration, or ask you to solve for the gear ratio N that satisfies an inertia-matching condition given specific J_m and J_L values.</p>
+</div>
+
+<div class="variant"><span class="tag">Variant</span>
+<p><b>Drive system comparison from a different angle.</b> Instead of the efficiency/positioning T/F pair, could ask you to rank all three drive types by force density, or describe a specific application (e.g. "explosive atmosphere, simple clamping action") and ask which drive type fits best — same underlying comparison table, different framing.</p>
+</div>
+
+<div class="variant"><span class="tag">Variant</span>
+<p><b>Four-quadrant question about energy flow instead of bridge structure.</b> Could ask you to identify which quadrant a given speed/torque scenario is in (same diagram as the Motor Control regen-braking section), or to calculate regenerated power during a braking event (P = T × ω).</p>
+</div>
+
+</div>
+</body>
+</html>
