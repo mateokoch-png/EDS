@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDS4 Interfacing — Full Notes</title>
+<style>
+  :root {
+    --bg: #ffffff; --ink: #1a1a1a; --sub: #555; --accent: #2563eb;
+    --red: #dc2626; --green: #16a34a; --amber: #d97706; --bgcard: #f8f9fb; --border: #e5e7eb;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--ink); background: var(--bg); line-height: 1.6; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 18px 80px; }
+  h1 { font-size: 26px; margin-bottom: 4px; }
+  .subtitle { color: var(--sub); margin-top: 0; margin-bottom: 24px; }
+  h2 { font-size: 21px; margin-top: 48px; padding-top: 12px; border-top: 3px solid var(--accent); }
+  h3 { font-size: 17px; margin-top: 28px; color: var(--accent); }
+  p { margin: 8px 0; }
+  .box { background: var(--bgcard); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin: 14px 0; }
+  .box.green { background: #f0fdf4; border-color: var(--green); }
+  .box.red { background: #fef2f2; border-color: var(--red); }
+  .box.amber { background: #fffbeb; border-color: var(--amber); }
+  .diagram { display: flex; justify-content: center; margin: 16px 0; }
+  .diagram svg { max-width: 100%; height: auto; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13.5px; }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--bgcard); font-weight: 700; }
+  .toc { background: var(--bgcard); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; }
+  .toc a { display: block; padding: 4px 0; color: var(--accent); text-decoration: none; font-size: 14px; }
+  code { background: #f1f1f1; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+  .step { background: #eff6ff; border: 1px solid var(--accent); border-radius: 8px; padding: 10px 14px; margin: 10px 0; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+  .trap { background: #fef2f2; border: 1px solid var(--red); border-radius: 10px; padding: 12px 16px; margin: 10px 0; }
+  .trap .tag { display: inline-block; background: var(--red); color: white; font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 12px; margin-bottom: 6px; text-transform: uppercase; }
+  .recurring { background: #fffbeb; border: 1px solid var(--amber); border-radius: 10px; padding: 12px 16px; margin: 10px 0; }
+  .recurring .tag { display: inline-block; background: var(--amber); color: white; font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 12px; margin-bottom: 6px; text-transform: uppercase; }
+  .flagship { background: #faf5ff; border: 2px solid #9333ea; border-radius: 10px; padding: 14px 16px; margin: 14px 0; }
+  .flagship .tag { display: inline-block; background: #9333ea; color: white; font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 12px; margin-bottom: 6px; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>EDS4 — Interfacing, full notes</h1>
+<p class="subtitle">This topic is tested HEAVILY — multiple recurring MC questions plus two flagship open questions worth real points. Full depth here.</p>
+
+<div class="toc">
+  <a href="#input">1. Digital input protection circuit</a>
+  <a href="#output">2. Digital output — sink/source current calculation</a>
+  <a href="#opto">3. Opto-coupler digital interfacing</a>
+  <a href="#schmitt">4. Comparator with hysteresis (Schmitt trigger)</a>
+  <a href="#ssr">5. SSR/thyristor — AC-only switching (recap)</a>
+  <a href="#hbridge">6. H-bridge series inductor (recap)</a>
+  <a href="#tline">7. Transmission lines — when do they matter?</a>
+  <a href="#flagship1">8. Flagship open Q: Hall-effect sensor interfacing</a>
+  <a href="#flagship2">9. Flagship open Q: source/sink mismatch (opto-isolated driver)</a>
+  <a href="#traps">10. Exam trap library</a>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="input">1. Digital input protection circuit</h2>
+<div class="diagram">
+<svg viewBox="0 0 420 220" xmlns="http://www.w3.org/2000/svg">
+<text x="20" y="20" font-size="11" fill="#555">input pin</text>
+<line x1="20" y1="100" x2="80" y2="100" stroke="#1a1a1a" stroke-width="2"/>
+<path d="M 80,85 l10,15 l-20,0 z" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+<rect x="60" y="100" width="40" height="16" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+<text x="80" y="135" text-anchor="middle" font-size="10">22k series R</text>
+<line x1="100" y1="108" x2="160" y2="108" stroke="#1a1a1a" stroke-width="2"/>
+<line x1="160" y1="40" x2="160" y2="60" stroke="#dc2626" stroke-width="2"/>
+<path d="M 155,55 l5,10 l5,-10 z" fill="#dc2626"/>
+<line x1="160" y1="60" x2="160" y2="108" stroke="#dc2626" stroke-width="2"/>
+<text x="165" y="45" font-size="10" fill="#dc2626">+3.3V</text>
+<line x1="160" y1="108" x2="160" y2="160" stroke="#2563eb" stroke-width="2"/>
+<path d="M 155,150 l5,10 l5,-10 z" fill="#2563eb"/>
+<line x1="160" y1="160" x2="160" y2="180" stroke="#2563eb" stroke-width="2"/>
+<text x="165" y="195" font-size="10" fill="#2563eb">GND</text>
+<rect x="195" y="98" width="40" height="20" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+<text x="215" y="135" text-anchor="middle" font-size="10">22k pull-down</text>
+<line x1="215" y1="118" x2="215" y2="180" stroke="#1a1a1a" stroke-width="2"/>
+<line x1="160" y1="108" x2="280" y2="108" stroke="#1a1a1a" stroke-width="2"/>
+<line x1="280" y1="95" x2="280" y2="120" stroke="#1a1a1a" stroke-width="2"/>
+<line x1="280" y1="108" x2="310" y2="108" stroke="#1a1a1a" stroke-width="2"/>
+<text x="285" y="90" font-size="9">10nF</text>
+<rect x="310" y="85" width="70" height="45" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+<text x="345" y="112" text-anchor="middle" font-size="10" fill="#2563eb">Schmitt</text>
+<line x1="380" y1="108" x2="410" y2="108" stroke="#1a1a1a" stroke-width="2"/>
+</svg>
+</div>
+<p>The two diodes (one pointing toward +3.3V, one toward GND) are <b>clamping/protection diodes</b>. If the input voltage tries to rise above +3.3V + (diode drop), the top diode conducts and clamps it. If it tries to go below 0V − (diode drop), the bottom diode conducts. This protects the sensitive logic input from overvoltage spikes, ESD, or wiring mistakes.</p>
+<div class="step">The series resistor (22k) limits the current that flows through those clamp diodes during a fault, protecting them from burning out. The pull-down resistor sets a known default (logic LOW) when nothing is connected. The 10nF capacitor + the resistors form a simple low-pass filter, removing high-frequency noise before the signal reaches the Schmitt trigger buffer.</div>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="output">2. Digital output — sink/source current calculation</h2>
+<div class="recurring"><span class="tag">Recurring calculation</span>
+<p>An NPN transistor output sinks current through a 2.2kΩ pull-up resistor to +5V. What's the maximum current available in source mode?</p>
+</div>
+<div class="diagram">
+<svg viewBox="0 0 280 200" xmlns="http://www.w3.org/2000/svg">
+<line x1="140" y1="20" x2="140" y2="45" stroke="#1a1a1a" stroke-width="2"/>
+<text x="140" y="14" text-anchor="middle" font-size="11">+5V</text>
+<rect x="120" y="45" width="40" height="20" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+<text x="190" y="58" font-size="10">2.2kΩ pull-up</text>
+<line x1="140" y1="65" x2="140" y2="95" stroke="#1a1a1a" stroke-width="2"/>
+<circle cx="140" cy="95" r="4" fill="#1a1a1a"/>
+<line x1="140" y1="95" x2="220" y2="95" stroke="#16a34a" stroke-width="2"/>
+<text x="225" y="99" font-size="10" fill="#16a34a">V_out</text>
+<line x1="140" y1="95" x2="140" y2="125" stroke="#1a1a1a" stroke-width="2"/>
+<path d="M 130,125 L 150,125 L 130,155 L 150,155 Z" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+<text x="160" y="142" font-size="10">NPN</text>
+<line x1="140" y1="155" x2="140" y2="180" stroke="#1a1a1a" stroke-width="2"/>
+<text x="140" y="195" text-anchor="middle" font-size="11">GND</text>
+</svg>
+</div>
+<div class="step"><b>Sink mode (transistor ON):</b> the NPN pulls the output node down close to 0V (Vce_sat ≈ 0.2-0.6V, often approximated as 0). Current flows FROM the pull-up THROUGH the transistor to ground.</div>
+<div class="step"><b>Source mode (transistor OFF):</b> nothing is pulling the node down, so the pull-up resistor alone determines how much current the output node can SUPPLY to an external load before its voltage sags significantly. Maximum source current ≈ (V_supply − V_out_min) / R_pullup.</div>
+<div class="box green">
+<p><b>The exam's actual numbers:</b> I_max = (5V − 0.6V) / 2.2kΩ ≈ <b>2 mA</b>. (The 0.6V accounts for whatever the load's own forward drop or minimum acceptable voltage is — check what the question gives you; sometimes it's simplified to just 5V/2.2k ≈ 2.27mA if no offset is specified.)</p>
+</div>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="opto">3. Opto-coupler digital interfacing</h2>
+<div class="recurring"><span class="tag">Recurring question</span>
+<p>A CNY17F-3 opto-coupler has its phototransistor collector pulled up to +3.3V through a 10kΩ resistor. When the input LED is OFF (0V), what's the output voltage?</p>
+</div>
+<div class="diagram">
+<svg viewBox="0 0 260 180" xmlns="http://www.w3.org/2000/svg">
+<line x1="140" y1="15" x2="140" y2="40" stroke="#1a1a1a" stroke-width="2"/>
+<text x="140" y="10" text-anchor="middle" font-size="11">+3.3V</text>
+<rect x="120" y="40" width="40" height="18" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+<text x="190" y="53" font-size="10">10kΩ pull-up</text>
+<line x1="140" y1="58" x2="140" y2="85" stroke="#1a1a1a" stroke-width="2"/>
+<circle cx="140" cy="85" r="4" fill="#1a1a1a"/>
+<line x1="140" y1="85" x2="220" y2="85" stroke="#16a34a" stroke-width="2"/>
+<text x="225" y="89" font-size="10" fill="#16a34a">V_out</text>
+<path d="M 130,85 L 150,85 L 130,115 L 150,115 Z" fill="none" stroke="#9ca3af" stroke-width="2" stroke-dasharray="3,2"/>
+<text x="160" y="102" font-size="10" fill="#9ca3af">phototransistor</text>
+<text x="160" y="115" font-size="9" fill="#9ca3af">(OFF — no light)</text>
+<line x1="140" y1="115" x2="140" y2="145" stroke="#1a1a1a" stroke-width="2"/>
+<text x="140" y="160" text-anchor="middle" font-size="11">GND</text>
+</svg>
+</div>
+<p>With the LED off, no light reaches the phototransistor — it stays OFF (acts like an open switch, very high impedance). With the transistor open, the 10kΩ pull-up has nothing pulling against it, so it pulls the output node all the way up to the supply rail.</p>
+<div class="box green"><p><b>Answer: V_out = +3.3V.</b> The output simply follows the pull-up rail when the phototransistor is off — same source-mode logic as the NPN output above.</p></div>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="schmitt">4. Comparator with hysteresis (Schmitt trigger)</h2>
+<div class="diagram">
+<svg viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg">
+<line x1="40" y1="180" x2="280" y2="180" stroke="#9ca3af"/><line x1="160" y1="200" x2="160" y2="20" stroke="#9ca3af"/>
+<text x="285" y="185" font-size="10">Vin</text><text x="165" y="18" font-size="10">Vout</text>
+<path d="M 60,160 L 130,160 L 130,40 L 260,40" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+<path d="M 260,160 L 190,160 L 190,40 L 60,40" fill="none" stroke="#d97706" stroke-width="2.5" stroke-dasharray="5,3"/>
+<line x1="130" y1="180" x2="130" y2="160" stroke="#2563eb" stroke-width="1" stroke-dasharray="3,2"/>
+<line x1="190" y1="180" x2="190" y2="160" stroke="#d97706" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="125" y="195" text-anchor="middle" font-size="9" fill="#2563eb">V_lower</text>
+<text x="195" y="195" text-anchor="middle" font-size="9" fill="#92400e">V_upper</text>
+</svg>
+</div>
+<p>Positive feedback (a resistor feeding the output back to the non-inverting input) creates TWO different switching thresholds instead of one: V_upper for the rising direction (blue solid path), V_lower for the falling direction (orange dashed path). This gap between thresholds is the <b>hysteresis</b> — it prevents a noisy signal hovering near a single threshold from causing rapid, chattering output transitions.</p>
+<div class="box amber"><p><b>Calculating the thresholds:</b> with positive feedback resistor R3 feeding back from output to the comparator's reference node (often combined with a divider), the threshold shifts depending on the current output state. Plug in the actual output voltage (Vout high or Vout low) into the divider equation to get V_upper and V_lower separately — the past exam question gave specific resistor values and asked you to verify Vout at a given Vin, which just means: figure out which threshold applies given the current state, then compare Vin against it.</p></div>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="ssr">5. SSR/thyristor — AC-only switching (recap from Motor Control)</h2>
+<p>A solid-state relay built around an SCR/thyristor pair can only switch <b>AC loads</b>. Once triggered, a thyristor latches on and won't turn off until current drops below the holding current — which only happens naturally when AC current crosses zero each half-cycle. DC current never does this on its own. (Full mechanism in the Motor Control notes.)</p>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="hbridge">6. H-bridge series inductor (recap from Motor Control)</h2>
+<p>The inductor in series with the motor in a PWM H-bridge drive smooths the chopped current — a low-pass filter reducing current ripple. (Same recurring question, same answer, covered fully in Motor Control notes.)</p>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="tline">7. Transmission lines — when do they actually matter?</h2>
+<div class="recurring"><span class="tag">Recurring question — the actual rule, not just "high frequency"</span>
+<p>A 5cm line carries a 5MHz clock with a 0.5ns signal transition (rise) time. Do transmission-line effects matter here?</p>
+</div>
+<div class="box red">
+<p><b>The trap:</b> people assume "is the frequency high?" is the deciding factor. It's NOT directly the frequency — it's whether the PHYSICAL LENGTH of the cable is significant compared to the SPATIAL EXTENT of the signal's edge (how far the edge "travels" along the cable during its own transition time).</p>
+</div>
+<div class="step"><b>The actual rule of thumb:</b> transmission-line effects matter when cable length ≥ 10% of (propagation velocity × transition time) — i.e., compare physical length to how far the signal's rising/falling edge physically spans along the cable while it's still transitioning. If the cable is much shorter than this spatial extent, you can treat it as a simple lumped circuit (just R, L, C) and ignore propagation delay effects.</p>
+<div class="step">Practically: take the transition time (0.5ns here), multiply by the propagation velocity (a fraction of the speed of light, given by the cable's velocity factor), get a length — call it the "spatial extent of the edge." Compare your actual cable length (5cm) against 10% of that. If your cable is longer than that 10% threshold, treat it as a transmission line (use Z0, reflection coefficients, etc.). If shorter, simple lumped analysis is fine.</div>
+
+<h3>Key transmission line formulas (formula sheet)</h3>
+<table>
+<tr><th>Quantity</th><th>Formula</th><th>Meaning</th></tr>
+<tr><td>Characteristic impedance</td><td><code>Z₀ = √(L'/C')</code></td><td>L', C' = inductance/capacitance PER UNIT LENGTH</td></tr>
+<tr><td>Propagation delay</td><td><code>t_d = √(L·C)</code></td><td>L, C = TOTAL inductance/capacitance of the whole cable (not per-length)</td></tr>
+<tr><td>Reflection coefficient</td><td><code>Γ = (Z_load − Z₀) / (Z_load + Z₀)</code></td><td>Γ = 0 (no reflection) when load impedance matches Z₀ exactly</td></tr>
+</table>
+<p>Open questions in past exams gave a datasheet (L' and C' per meter, or a measured propagation delay) and asked you to back-calculate cable length, total L/C, or — using a measured reflected voltage — the actual unknown load impedance via the reflection coefficient formula rearranged for Z_load.</p>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="flagship1">8. Flagship open question: Hall-effect current sensor interfacing</h2>
+<div class="flagship"><span class="tag">High-value open question</span>
+<p>A LEM Hall-effect current sensor (e.g. HO40-NP) needs to be wired to a microcontroller (e.g. Arduino, 3.3V/5V ADC). The question walks through: (a) how many times to route the primary conductor through the sensor's aperture (Np = 2 turns instead of 1, to scale the effective measurement range down), (b) computing the sensor's output voltage from its sensitivity and reference voltage (datasheet values), (c) designing/checking an op-amp gain stage feeding the ADC, and (d) verifying the resulting voltage range fits within the ADC's input range (often 0–3.3V or 0–5V).</p>
+</div>
+<div class="step"><b>(a) Why route the primary wire through MULTIPLE times (Np=2):</b> a Hall current sensor's output is proportional to N_primary × I_primary (effectively "ampere-turns," same logic as the zero-flux sensor from the Sensors topic). If your actual current is smaller than the sensor's rated range, looping the wire through twice EFFECTIVELY DOUBLES the apparent current the sensor sees, increasing your output signal's resolution/sensitivity for small currents.</div>
+<div class="step"><b>(b) Output voltage from sensitivity:</b> V_out = V_ref + (Sensitivity × N_primary × I_primary). The datasheet's "sensitivity" (mV/A) tells you how much the output swings per amp, the same logic as the ACS712 Hall sensor from the Sensors topic.</div>
+<div class="step"><b>(c) Op-amp gain stage:</b> if the sensor's output swing is too small (or the wrong offset) for your ADC's full range, a non-inverting op-amp amplifier scales/shifts it. Use the standard gain formula G = 1 + (Rf/Rin) and solve for the resistor values needed to hit your target range.</div>
+<div class="step"><b>(d) Range check — the step people skip:</b> after scaling, does the MAXIMUM possible output voltage exceed your ADC/supply rail (3.3V)? If your calculated max output is, say, 4.1V but your ADC only accepts 0-3.3V, that's a design FAIL — you'd clip/damage the input. Always finish this question by explicitly comparing your final number against the rail.</div>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="flagship2">9. Flagship open question: source/sink mismatch (opto-isolated stepper driver)</h2>
+<div class="flagship"><span class="tag">High-value open question</span>
+<p>An opto-isolated stepper driver (e.g. ACPL-847 opto array) needs to be driven from a microcontroller's digital outputs through PNP transistors. The question gives you a wiring diagram and asks: does this design actually work?</p>
+</div>
+<div class="diagram">
+<svg viewBox="0 0 380 160" xmlns="http://www.w3.org/2000/svg">
+<rect x="20" y="50" width="100" height="50" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+<text x="70" y="80" text-anchor="middle" font-size="11" fill="#2563eb">MCU output</text>
+<text x="70" y="35" text-anchor="middle" font-size="10" fill="#2563eb">drives via PNP → SOURCES current</text>
+<line x1="120" y1="75" x2="180" y2="75" stroke="#1a1a1a" stroke-width="2"/>
+<text x="150" y="68" text-anchor="middle" font-size="16">≠</text>
+<rect x="200" y="50" width="160" height="50" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+<text x="280" y="80" text-anchor="middle" font-size="11" fill="#dc2626">opto-coupler LED input</text>
+<text x="280" y="35" text-anchor="middle" font-size="10" fill="#dc2626">needs current SUNK to ground</text>
+</svg>
+</div>
+<div class="step"><b>The mismatch:</b> the MCU's output, wired through PNP transistors, is set up to SOURCE current (push current out, common-source configuration). But the opto-coupler array's LED inputs are wired expecting to SINK current (pull current down through pull-up resistors to ground) — these are opposite current directions. As wired, the circuit doesn't actually drive the optocoupler's LEDs correctly.</div>
+<div class="step"><b>The fix/verification:</b> the question also asks you to check whether the available current (through the 4.7kΩ pull-up resistors, from a 5V rail) is even enough to satisfy the opto-coupler's minimum forward current requirement (e.g. I_F ≥ 1.5mA at V_F ≤ 1.4V). Calculate: I_available = (5V − V_F) / R_pullup = (5 − 1.4) / 4700 ≈ 0.77mA — compare against the 1.5mA minimum required. If available current is LESS than required, the LED won't turn on reliably even if the source/sink direction were fixed — TWO separate problems, both must be checked.</div>
+<div class="box red"><p><b>The exam-ready answer structure for this type of question:</b> (1) identify the source/sink direction mismatch explicitly by name, (2) calculate the actual available current given the resistor/voltage values, (3) compare against the datasheet minimum, (4) state clearly whether the design works or fails, and why — usually it's a clean "no, for two independent reasons."</p></div>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="traps">10. Exam trap library</h2>
+
+<div class="trap"><span class="tag">Output mode trap</span>
+<p>Confusing sink current capability with source current capability — they're often DIFFERENT numbers on a real datasheet (e.g. "sink 20mA, source 5mA"). Always check which mode the question is asking about.</p>
+</div>
+
+<div class="trap"><span class="tag">Opto trap</span>
+<p>"With the LED off, the output reads near 0V." → False for a pull-up configuration — LED off means the phototransistor is OFF (open), so the pull-up resistor pulls the output HIGH, not low.</p>
+</div>
+
+<div class="trap"><span class="tag">Transmission line trap</span>
+<p>"Transmission line effects only matter above some specific frequency." → Not quite — it's about comparing physical cable length to the spatial extent of the signal's EDGE (transition time × propagation velocity), not frequency alone. A slow-edged signal at high frequency might still be fine for lumped analysis; a fast-edged signal at lower frequency might not be.</p>
+</div>
+
+<div class="trap"><span class="tag">Source/sink design trap</span>
+<p>Assuming a circuit "should work" just because voltage levels match — current DIRECTION (source vs sink) must also match between a driver and the thing it's driving. This is the entire point of the flagship opto-isolated driver question.</p>
+</div>
+
+</div>
+</body>
+</html>
