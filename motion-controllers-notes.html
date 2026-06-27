@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDS4 Motion Controllers — Exam-Focused Notes</title>
+<style>
+  :root {
+    --bg: #ffffff; --ink: #1a1a1a; --sub: #555; --accent: #2563eb;
+    --red: #dc2626; --green: #16a34a; --amber: #d97706; --bgcard: #f8f9fb; --border: #e5e7eb;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--ink); background: var(--bg); line-height: 1.6; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 18px 80px; }
+  h1 { font-size: 26px; margin-bottom: 4px; }
+  .subtitle { color: var(--sub); margin-top: 0; margin-bottom: 24px; }
+  h2 { font-size: 21px; margin-top: 48px; padding-top: 12px; border-top: 3px solid var(--accent); }
+  h3 { font-size: 17px; margin-top: 28px; color: var(--accent); }
+  p { margin: 8px 0; }
+  .box { background: var(--bgcard); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin: 14px 0; }
+  .box.green { background: #f0fdf4; border-color: var(--green); }
+  .box.red { background: #fef2f2; border-color: var(--red); }
+  .diagram { display: flex; justify-content: center; margin: 16px 0; }
+  .diagram svg { max-width: 100%; height: auto; }
+  .toc { background: var(--bgcard); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; }
+  .toc a { display: block; padding: 4px 0; color: var(--accent); text-decoration: none; font-size: 14px; }
+  .step { background: #eff6ff; border: 1px solid var(--accent); border-radius: 8px; padding: 10px 14px; margin: 10px 0; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+  .trap { background: #fef2f2; border: 1px solid var(--red); border-radius: 10px; padding: 12px 16px; margin: 10px 0; }
+  .trap .tag { display: inline-block; background: var(--red); color: white; font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 12px; margin-bottom: 6px; text-transform: uppercase; }
+  .recurring { background: #fffbeb; border: 1px solid var(--amber); border-radius: 10px; padding: 12px 16px; margin: 10px 0; }
+  .recurring .tag { display: inline-block; background: var(--amber); color: white; font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 12px; margin-bottom: 6px; text-transform: uppercase; }
+  .honest { background: #f5f3ff; border: 1px solid #7c3aed; border-radius: 10px; padding: 12px 16px; margin: 10px 0; }
+  .honest .tag { display: inline-block; background: #7c3aed; color: white; font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 12px; margin-bottom: 6px; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>EDS4 — Motion Controllers, exam-focused notes</h1>
+<p class="subtitle">Only two statements from this topic actually recur in the 4 past exams checked — but you need the mechanism behind both to answer confidently.</p>
+
+<div class="honest"><span class="tag">What's actually tested here</span>
+<p>Past exams reuse the SAME True/False pair, word for word, across multiple years: one statement about velocity profile optimality, one about PID/feedforward. That's it for this topic in the sample I checked — no separate calculation questions on PID gains or motion profiles. So this page goes deep on exactly those two statements, plus enough mechanism that you could handle a reworded version.</p>
+</div>
+
+<div class="toc">
+  <a href="#pid">1. PID basics — just enough to handle the recurring statement</a>
+  <a href="#feedforward">2. Feedforward — why it helps but doesn't guarantee stability</a>
+  <a href="#profiles">3. Velocity profiles — why parabolic is not time-optimal</a>
+  <a href="#recurring">4. The exact recurring statements</a>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="pid">1. PID basics</h2>
+<div class="diagram">
+<svg viewBox="0 0 460 200" xmlns="http://www.w3.org/2000/svg">
+<circle cx="40" cy="100" r="16" fill="none" stroke="#1a1a1a" stroke-width="2"/><text x="40" y="105" text-anchor="middle" font-size="14">Σ</text>
+<text x="40" y="60" text-anchor="middle" font-size="10">desired position</text>
+<line x1="56" y1="100" x2="90" y2="100" stroke="#1a1a1a" stroke-width="2"/>
+<rect x="90" y="40" width="100" height="120" fill="none" stroke="#2563eb" stroke-width="2"/>
+<text x="140" y="75" text-anchor="middle" font-size="11" fill="#2563eb">P: Kp·e</text>
+<text x="140" y="105" text-anchor="middle" font-size="11" fill="#2563eb">I: Ki·∫e dt</text>
+<text x="140" y="135" text-anchor="middle" font-size="11" fill="#2563eb">D: Kd·de/dt</text>
+<line x1="190" y1="100" x2="230" y2="100" stroke="#1a1a1a" stroke-width="2"/>
+<ellipse cx="270" cy="100" rx="35" ry="25" fill="none" stroke="#16a34a" stroke-width="2"/><text x="270" y="105" text-anchor="middle" font-size="12" fill="#16a34a">Motor</text>
+<path d="M 305,100 L 410,100 L 410,170 L 40,170 L 40,116" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4,3"/>
+<text x="225" y="185" text-anchor="middle" font-size="10" fill="#555">measured position feedback (encoder)</text>
+</svg>
+</div>
+<p>The error <b>e</b> = desired position − actual position. Three terms act on that error in parallel:</p>
+<div class="step"><b>P (proportional):</b> output = Kp × e. Bigger error → bigger correction, right now. Fast, but a P-only controller settles with a small leftover error under load (it needs SOME error to keep producing a correcting output).</div>
+<div class="step"><b>I (integral):</b> output = Ki × ∫e dt — it keeps accumulating as long as ANY error remains, even a tiny one. That's exactly why it eliminates steady-state error: a P-only controller can sit forever at a small nonzero error, but the integral term keeps growing for as long as that error exists, pushing the output further until the error reaches exactly zero.</div>
+<div class="step"><b>D (derivative):</b> output = Kd × de/dt — reacts to how fast the error is changing, acting as a brake when the system is approaching the target fast (reduces overshoot).</div>
+
+<div class="box green">
+<p><b>Why "a well-tuned PID controller achieves zero steady-state error" is TRUE (for a constant/step target):</b> as long as the system is stable, the integral term will keep growing for as long as ANY error persists. The only way the integral term can stop growing is if e finally reaches exactly zero. So a stable PID loop with integral action is mathematically guaranteed to drive constant-target error to zero eventually — that's the whole reason the I term exists.</p>
+</div>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="feedforward">2. Feedforward — helps tracking, doesn't guarantee stability</h2>
+<p><b>What it is:</b> instead of waiting for an error to appear and then reacting to it (like P/I/D do), feedforward adds a term computed directly from the KNOWN desired motion — e.g. velocity feedforward adds Kvff × (desired velocity) straight into the output, since you already know roughly how much drive signal is needed to achieve that speed, without needing an error to build up first.</p>
+<div class="step">This reduces "following error" (the lag between commanded and actual position during motion) because the controller isn't purely reactive anymore — part of the output is pre-computed from the plan itself.</div>
+
+<div class="box red">
+<p><b>Why "feedforward guarantees stability regardless of PID tuning" is FALSE:</b> feedforward only adds an extra, open-loop, pre-computed signal on top of the existing PID loop. It does nothing to change the feedback loop's own dynamics — if your Kp/Ki/Kd combination is unstable (e.g. way too high gain, causing oscillation that grows instead of shrinks), adding feedforward doesn't fix that instability at all. Feedforward improves TRACKING ACCURACY, not STABILITY — these are two separate properties of a control loop, and exams like to test whether you can tell them apart.</p>
+</div>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="profiles">3. Velocity profiles — why parabolic isn't time-optimal</h2>
+<div class="diagram">
+<svg viewBox="0 0 460 200" xmlns="http://www.w3.org/2000/svg">
+<line x1="20" y1="170" x2="440" y2="170" stroke="#9ca3af"/><line x1="20" y1="170" x2="20" y2="20" stroke="#9ca3af"/>
+<text x="445" y="175" font-size="10">time</text><text x="22" y="15" font-size="10">velocity</text>
+<polyline points="40,150 110,50 250,50 320,150" fill="none" stroke="#2563eb" stroke-width="3"/>
+<text x="175" y="40" text-anchor="middle" font-size="11" fill="#2563eb">trapezoidal (fastest for given vmax/amax)</text>
+<path d="M 360,150 Q 380,60 400,150" fill="none" stroke="#d97706" stroke-width="3"/>
+<text x="395" y="185" text-anchor="middle" font-size="10" fill="#92400e">parabolic</text>
+</svg>
+</div>
+<p>A <b>trapezoidal</b> profile (constant accel → constant cruise speed → constant decel) reaches and HOLDS the maximum allowed velocity for as long as possible — that flat top is where distance gets covered fastest.</p>
+<div class="step">A <b>parabolic</b> profile never has a flat-top cruise phase at all — velocity is constantly changing (curving) the whole time, meaning it spends LESS time at or near maximum velocity for a given peak acceleration. Less time at high speed, for the same move distance and the same acceleration limit, means MORE total time — parabolic is slower, not faster.</div>
+<p>This is why "parabolic is optimal/fastest for point-to-point motion" is FALSE — trapezoidal is faster for a given vmax/amax limit. (A parabolic-style smoothing IS used when you need to limit JERK, like an S-curve, but that trades away time-optimality on purpose, for smoothness — it's not claiming to be the fastest option.)</p>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="recurring">4. The exact recurring statements (verbatim pattern across exam years)</h2>
+
+<div class="recurring"><span class="tag">Recurring T/F pair — appears in 2023 + both 2024 exams</span>
+<p><b>Statement 1:</b> "A parabolic velocity profile is optimal/fastest for point-to-point motion." → <span style="color:var(--red);font-weight:700;">FALSE</span> — trapezoidal is faster for the same vmax/amax (see section 3).</p>
+<p><b>Statement 2:</b> "A PM-DC motor still heats up during regenerative braking." → <span style="color:var(--green);font-weight:700;">TRUE</span> — I²R copper losses still occur regardless of energy direction (covered in the Motor Control notes).</p>
+<p><b>Answer pattern:</b> only statement 2 is correct.</p>
+</div>
+
+<div class="recurring"><span class="tag">Recurring T/F pair — appears in 2023 + both 2024 exams</span>
+<p><b>Statement 1:</b> "A well-tuned PID controller eliminates steady-state error for a step input, provided the system is stable." → <span style="color:var(--green);font-weight:700;">TRUE</span> — the integral term guarantees this (see section 1).</p>
+<p><b>Statement 2:</b> "Adding feedforward guarantees stability regardless of how the PID gains are tuned." → <span style="color:var(--red);font-weight:700;">FALSE</span> — feedforward improves tracking, not stability (see section 2).</p>
+<p><b>Answer pattern:</b> only statement 1 is correct.</p>
+</div>
+
+<div class="trap"><span class="tag">If reworded</span>
+<p>Watch for a version that swaps which statement is true/false, or changes "PM-DC motor" to a different motor type, or changes "parabolic" to "S-curve" (S-curve IS smoother/lower-jerk than trapezoidal, but still not faster — don't let a reworded version trick you into thinking smoother = faster).</p>
+</div>
+
+</div>
+</body>
+</html>
