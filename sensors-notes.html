@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDS4 Sensors — Full Notes</title>
+<style>
+  :root {
+    --bg: #ffffff; --ink: #1a1a1a; --sub: #555; --accent: #2563eb;
+    --red: #dc2626; --green: #16a34a; --amber: #d97706; --bgcard: #f8f9fb; --border: #e5e7eb;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--ink); background: var(--bg); line-height: 1.6; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 18px 80px; }
+  h1 { font-size: 26px; margin-bottom: 4px; }
+  .subtitle { color: var(--sub); margin-top: 0; margin-bottom: 24px; }
+  h2 { font-size: 21px; margin-top: 48px; padding-top: 12px; border-top: 3px solid var(--accent); }
+  h3 { font-size: 17px; margin-top: 28px; color: var(--accent); }
+  p { margin: 8px 0; }
+  .box { background: var(--bgcard); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin: 14px 0; }
+  .box.green { background: #f0fdf4; border-color: var(--green); }
+  .box.amber { background: #fffbeb; border-color: var(--amber); }
+  .box.red { background: #fef2f2; border-color: var(--red); }
+  .label { font-weight: 700; }
+  .diagram { display: flex; justify-content: center; margin: 16px 0; }
+  .diagram svg { max-width: 100%; height: auto; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--bgcard); font-weight: 700; }
+  .good { color: var(--green); font-weight: 600; }
+  .bad { color: var(--red); font-weight: 600; }
+  .toc { background: var(--bgcard); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; }
+  .toc a { display: block; padding: 4px 0; color: var(--accent); text-decoration: none; font-size: 14px; }
+  .toc a:hover { text-decoration: underline; }
+  code { background: #f1f1f1; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+  .step { background: #eff6ff; border: 1px solid var(--accent); border-radius: 8px; padding: 10px 14px; margin: 10px 0; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>EDS4 — Sensors, full notes</h1>
+<p class="subtitle">Mechanisms, comparisons, and exam strategy. Tap any link below to jump.</p>
+
+<div class="toc">
+  <a href="#encoders">1. Encoders (incremental, absolute, sincos)</a>
+  <a href="#current">2. Current sensors (shunt, CT, Hall, fluxgate)</a>
+  <a href="#hysteresis">3. Hysteresis explained</a>
+  <a href="#temp">4. Temperature sensors (thermocouple, RTD, NTC, PTC)</a>
+  <a href="#compare-current">5. Current sensor comparison table</a>
+  <a href="#compare-temp">6. Temperature sensor comparison table</a>
+  <a href="#compare-pos">7. Position sensor comparison table</a>
+  <a href="#framework">8. Exam answer framework</a>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="encoders">1. Encoders</h2>
+
+<h3>Incremental encoder — quadrature decoding, step by step</h3>
+<p>A rotating slotted disk passes between an LED and two photodetectors, <b>A</b> and <b>B</b>, placed so they're offset by exactly <b>¼ of one slot's width</b>.</p>
+
+<div class="diagram">
+<svg viewBox="0 0 360 300" xmlns="http://www.w3.org/2000/svg">
+<circle cx="150" cy="150" r="95" fill="none" stroke="#cbd5e1" stroke-width="2"/>
+<g stroke="#0f172a" stroke-width="10">
+<line x1="150" y1="55" x2="150" y2="80"/>
+<line x1="217" y1="83" x2="200" y2="100"/>
+<line x1="245" y1="150" x2="220" y2="150"/>
+<line x1="217" y1="217" x2="200" y2="200"/>
+<line x1="150" y1="245" x2="150" y2="220"/>
+<line x1="83" y1="217" x2="100" y2="200"/>
+<line x1="55" y1="150" x2="80" y2="150"/>
+<line x1="83" y1="83" x2="100" y2="100"/>
+</g>
+<circle cx="150" cy="150" r="4" fill="#0f172a"/>
+<circle cx="150" cy="35" r="7" fill="#2563eb"/>
+<text x="164" y="38" font-size="14" fill="#2563eb">A</text>
+<circle cx="171" cy="37" r="7" fill="#d97706"/>
+<text x="182" y="50" font-size="14" fill="#d97706">B (offset ¼ slot)</text>
+<text x="55" y="285" font-size="12" fill="#555">disk spins this way →</text>
+</svg>
+</div>
+
+<p>As each slot passes, A switches on/off. Because B sits ¼ slot away, B switches at a <i>different moment</i> than A.</p>
+
+<div class="diagram">
+<svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg">
+<text x="10" y="25" font-size="14" font-weight="700" fill="#2563eb">Signal A</text>
+<path d="M 50,55 H 130 V 20 H 210 V 55 H 290 V 20 H 370 V 55 H 450 V 20 H 530 V 55" fill="none" stroke="#2563eb" stroke-width="3"/>
+<text x="10" y="105" font-size="14" font-weight="700" fill="#d97706">Signal B</text>
+<path d="M 50,105 V 70 H 167 V 105 H 247 V 70 H 327 V 105 H 407 V 70 H 487 V 105 H 530" fill="none" stroke="#d97706" stroke-width="3"/>
+<g fill="#16a34a">
+<circle cx="130" cy="38" r="5"/><circle cx="167" cy="88" r="5"/><circle cx="210" cy="38" r="5"/><circle cx="247" cy="88" r="5"/><circle cx="290" cy="38" r="5"/>
+</g>
+<text x="10" y="140" font-size="12" fill="#16a34a">● = counter ticks +1 (every rising AND falling edge, on BOTH A and B)</text>
+<path d="M 50,160 V 168 H 290 V 160" fill="none" stroke="#0f172a" stroke-width="1.5"/>
+<text x="80" y="186" font-size="12">← this whole stretch = ONE slot passing the sensor</text>
+<text x="80" y="208" font-size="13" font-weight="700">4 edges happened in 1 slot → 4 counts per slot</text>
+</svg>
+</div>
+
+<div class="box green">
+<p class="label">So where does "× 4" come from?</p>
+<p><b>Disk has 50 slots</b> ("50 PPR" in the datasheet) → <b>each slot produces 4 edges</b> (A rises, B rises, A falls, B falls) → <b>50 × 4 = 200 counts/rev</b>, which is the real, usable resolution.</p>
+</div>
+
+<div class="box">
+<p class="label">How direction is detected — no extra channel needed</p>
+<p>If the disk spins one way: A's edge happens first, then B follows ¼ slot later.<br>
+If it spins the other way: B's edge happens first, then A follows.<br>
+The controller just checks "which one changed first?" — that single fact gives direction. The Z (index) channel is <b>not</b> involved in direction sensing — exams like to bait you with that claim.</p>
+</div>
+
+<h3>Absolute encoder</h3>
+<p><b>What it is:</b> a disk with several concentric rings of light/dark segments (not just one ring like incremental), each ring read by its own sensor.</p>
+<p><b>How it works:</b> at any instant, the pattern of light/dark across <i>all</i> rings together forms a unique code, and every possible shaft angle has a different code. Reading all sensors once immediately tells the controller the exact angle — no counting, no homing.</p>
+<p><b>Why more rings = better resolution:</b> each extra ring doubles the number of distinguishable codes (like an extra binary digit) — more rings/sensors = finer resolution = higher cost.</p>
+<p>(In practice, <b>Gray code</b> is used instead of plain binary so only one ring changes at a time between adjacent positions — preventing momentary garbage readings during a transition.)</p>
+
+<h3>SinCos encoder</h3>
+<p><b>What it is:</b> physically similar to an incremental encoder, but the optics are designed so the output is a smooth continuous wave instead of a sharp on/off pulse.</p>
+<p><b>How it works:</b> the grating is filtered through a reticle so light intensity rises and falls roughly sinusoidally as the disk rotates. A second sensor offset by a quarter-period picks up the cosine version.</p>
+<div class="box">
+<p><b>Why this gives finer resolution:</b> with a plain pulse, you only know "somewhere in this slot." With continuous sin/cos <i>values</i>, you calculate the exact angle within the slot via <code>angle = atan2(sin, cos)</code> — math gives sub-pulse precision (called <b>interpolation</b>), with the same physical line-count on the disk.</p>
+</div>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="current">2. Current sensors</h2>
+
+<h3>Shunt resistor</h3>
+<p><b>What it is:</b> a resistor with a precisely-known, very small resistance (often milliohms), placed directly in series with the current path.</p>
+<p><b>How it works:</b> plain Ohm's law — V = I·R. R is known precisely, so measuring V across it gives I = V/R.</p>
+<div class="box amber">
+<p class="label">The catch and the fix</p>
+<p>The wires connecting the resistor also have their own resistance. If you measured voltage using the <i>same</i> wires that carry the big current, that wire resistance would add error to your reading.</p>
+<p><b>4-wire (Kelvin) connection:</b> use two separate, thin wires just for sensing voltage, connected right at the resistor's edges. Almost no current flows down these sense wires, so they pick up no extra voltage drop — a clean, accurate reading of just the resistor's own drop.</p>
+</div>
+
+<h3>Current Transformer (CT)</h3>
+<p><b>What it is:</b> a transformer where the wire carrying the unknown current passes through the core as the primary (usually 1 turn), with a many-turn secondary winding around the same core.</p>
+<p><b>How it works:</b> a <i>changing</i> current creates a <i>changing</i> magnetic flux in the core. That changing flux induces a voltage in the secondary (Faraday's law), driving a secondary current through a small "burden" resistor. Same ampere-turn balance as before: <code>N₁·I₁ = N₂·I₂</code>.</p>
+<div class="box red">
+<p class="label">Why DC doesn't work — the #1 exam trap</p>
+<p>A steady DC current produces a steady, unchanging flux. No <i>change</i> in flux means no induced voltage at all (Faraday's law needs dΦ/dt). CTs are AC-only by their basic operating principle, not as a design choice.</p>
+</div>
+
+<h3>Hall-effect current sensor</h3>
+<p><b>The chain of cause and effect:</b></p>
+<div class="step">1. Current I flows through a wire.</div>
+<div class="step">2. Any current creates a magnetic field around itself — bigger I → stronger field B.</div>
+<div class="step">3. That field passes through a small Hall element sitting in an air gap next to the wire.</div>
+<div class="step">4. Inside the Hall element, a small bias current is already flowing. The magnetic field pushes those moving charges sideways (the Hall effect).</div>
+<div class="step">5. The sideways push piles up charge on one side, creating a small sideways voltage V<sub>H</sub>.</div>
+<p>Net result: bigger I → stronger B → bigger V<sub>H</sub>. Measuring V<sub>H</sub> tells you I, without ever touching the wire electrically — that's the galvanic isolation.</p>
+
+<p><b>Open-loop</b> = the Hall element directly senses B, with no correction. <b>Closed-loop (zero-flux)</b> adds active feedback — see the dedicated explanation below — which cancels core hysteresis and drift, at the cost of needing its own amplifier and power supply.</p>
+
+<h3>Zero-flux (closed-loop) current transformer</h3>
+<div class="diagram">
+<svg viewBox="0 0 500 260" xmlns="http://www.w3.org/2000/svg">
+<rect x="160" y="40" width="200" height="120" rx="14" fill="none" stroke="#9ca3af" stroke-width="5"/>
+<text x="260" y="30" text-anchor="middle" font-size="12" fill="#555">magnetic core</text>
+<line x1="100" y1="80" x2="380" y2="80" stroke="#dc2626" stroke-width="4"/>
+<text x="20" y="75" font-size="12" fill="#dc2626">unknown I₁</text>
+<text x="20" y="92" font-size="12" fill="#dc2626">(N₁ turns, often 1)</text>
+<g stroke="#2563eb" stroke-width="4" fill="none">
+<path d="M 200,130 q10,-15 20,0 q10,15 20,0 q10,-15 20,0 q10,15 20,0 q10,-15 20,0"/>
+</g>
+<text x="260" y="165" text-anchor="middle" font-size="12" fill="#2563eb">feedback winding (N₂ turns)</text>
+<circle cx="260" cy="100" r="14" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="260" y="104" text-anchor="middle" font-size="10" fill="#92400e">Φ=0?</text>
+</svg>
+</div>
+<p>The unknown primary current I₁ creates flux in the core. A feedback winding driven by an amplifier injects an opposing current I₂ that cancels that flux back to <b>exactly zero</b>, like a tug-of-war where the opposing side matches your pull exactly so the rope never moves.</p>
+<div class="box green">
+<p>Because net flux is forced to zero, the ampere-turns must be exactly equal:</p>
+<p style="font-size:18px; font-weight:700; text-align:center;">N₁ · I₁ = N₂ · I₂</p>
+<p>So instead of measuring the big, hard-to-handle I₁ directly, you measure the small, easy I₂ and calculate <code>I₁ = I₂ × (N₂/N₁)</code>. A past exam's false-statement trap wrote this as "&lt;" instead of "=" — it must be an exact equality, that's the whole point of the feedback loop.</p>
+</div>
+
+<h3>Fluxgate sensor</h3>
+<p><b>What it is:</b> a small core driven repeatedly into full magnetic saturation by an AC excitation winding, with a second pickup winding watching the result.</p>
+<div class="step">1. With NO external field, the excitation current saturates the core symmetrically — same point in the positive half-cycle as the negative half-cycle. The pickup winding sees a clean, symmetric signal.</div>
+<div class="step">2. If an external field IS present (from the current being measured), it adds a constant bias on top of the AC excitation — now the core saturates slightly earlier in one half-cycle and later in the other. The symmetry breaks.</div>
+<div class="step">3. This broken symmetry shows up as a "2nd harmonic" distortion in the pickup winding's output — a component that simply isn't there with no external field.</div>
+<div class="step">4. Electronics measure the SIZE of that 2nd-harmonic distortion, which is directly proportional to the external field strength = the current being measured.</div>
+<p>This indirect "measure the distortion" trick gives very high sensitivity and low drift, but needs its own oscillator and detection electronics — the most expensive current sensor option.</p>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="hysteresis">3. Hysteresis, explained</h2>
+<p>Hysteresis = the magnetic core "remembers" where it's been — it doesn't retrace the same path when current reverses.</p>
+<div class="diagram">
+<svg viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg">
+<line x1="30" y1="180" x2="330" y2="180" stroke="#9ca3af"/>
+<line x1="180" y1="30" x2="180" y2="330" stroke="#9ca3af"/>
+<text x="335" y="185" font-size="11">H (∝ current)</text>
+<text x="190" y="25" font-size="11">B (flux)</text>
+<path d="M 60,100 C 120,50 240,50 300,100 C 320,140 320,220 300,260 C 240,310 120,310 60,260 C 40,220 40,140 60,100" fill="none" stroke="#dc2626" stroke-width="3"/>
+<circle cx="180" cy="75" r="5" fill="#16a34a"/>
+<text x="190" y="70" font-size="11" fill="#16a34a">+B remaining when H=0</text>
+<circle cx="180" cy="285" r="5" fill="#16a34a"/>
+<text x="190" y="300" font-size="11" fill="#16a34a">−B remaining when H=0</text>
+</svg>
+</div>
+<p>If you ramp current up then back to exactly zero, you'd expect flux to return to zero too. It doesn't — the loop shows flux gets "stuck" at a leftover value (<b>remanence</b>) even at zero current.</p>
+<p>For a simple open-loop Hall sensor, this leftover flux still pushes the Hall element, creating a small <b>offset error</b> — the sensor reads a small current even when the true current is zero. This is exactly the weakness a zero-flux design is built to cancel out (the feedback loop keeps the core's operating point pinned near zero, so it barely traces the hysteresis loop at all).</p>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="temp">4. Temperature sensors</h2>
+
+<h3>Thermocouple</h3>
+<p><b>What it is:</b> a junction of two dissimilar metals.</p>
+<p><b>How it works:</b> the temperature difference between the hot (measuring) junction and the cold (reference) junction generates a small voltage (µV–mV) — the Seebeck effect. It outputs a <b>voltage</b>, never a current by itself.</p>
+
+<h3>RTD (e.g. Pt100)</h3>
+<p><b>What it is:</b> a length of pure metal (almost always platinum), shaped as thin wire or film, with a precisely known resistance at a reference temperature (Pt100 = 100Ω at 0°C).</p>
+<p><b>How it works:</b> as temperature rises, the metal's atoms vibrate more. Electrons flowing through collide with these vibrating atoms more often, resisting their flow more — so resistance rises, nearly linearly over a wide range.</p>
+<p>In practice: pass a small known excitation current, measure voltage, calculate R = V/I, then convert to temperature via the sensor's standard curve. Same lead-resistance problem as the shunt resistor, so RTDs also use 4-wire Kelvin connections.</p>
+
+<h3>NTC thermistor</h3>
+<p><b>What it is:</b> a small bead/disk made from a semiconductor ceramic (metal oxide), not a pure metal.</p>
+<p><b>How it works:</b> in a semiconductor, charge carriers need thermal energy to become free to move. As temperature rises, more carriers get enough energy to break free, so resistance <b>falls</b>, and falls exponentially — not linearly.</p>
+<p>Trade-off: very sensitive (big resistance swing per °C) but strongly non-linear and accurate only over a fairly narrow window.</p>
+
+<h3>PTC thermistor</h3>
+<div class="box red">
+<p><b>Not a measuring device — a tripwire.</b> Resistance stays low and flat, then suddenly rockets upward right at a trip temperature (e.g. 130°C). The drive circuit just watches for "did resistance jump?" That's why it <b>cannot</b> give an accurate continuous temperature reading — exams repeatedly bait you with "PTC accurately measures temperature," which is always false.</p>
+</div>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="compare-current">5. Current sensor comparison</h2>
+<table>
+<tr><th>Sensor</th><th>Isolation?</th><th>AC/DC?</th><th>Accuracy</th><th>Cost</th><th>Best used when...</th></tr>
+<tr><td><b>Shunt resistor</b></td><td class="bad">None</td><td>AC + DC</td><td>Very good (4-wire)</td><td>Lowest</td><td>No isolation needed, OK with small power loss/heat.</td></tr>
+<tr><td><b>CT</b></td><td class="good">Yes</td><td class="bad">AC only</td><td>Good</td><td>Low</td><td>Mains/AC monitoring, never need DC.</td></tr>
+<tr><td><b>Hall (open-loop)</b></td><td class="good">Yes</td><td>AC + DC</td><td>Moderate (drift, hysteresis offset)</td><td>Medium</td><td>Need isolation + DC, accuracy not critical (e.g. overcurrent trip).</td></tr>
+<tr><td><b>Hall (closed-loop / zero-flux)</b></td><td class="good">Yes</td><td>AC + DC</td><td class="good">Very good</td><td>Higher</td><td>Precision feedback in a servo/motor current loop.</td></tr>
+<tr><td><b>Fluxgate</b></td><td class="good">Yes</td><td>AC + DC</td><td class="good">Excellent (very low drift)</td><td>Highest</td><td>Lab-grade/metering, cost no object.</td></tr>
+</table>
+
+<h2 id="compare-temp">6. Temperature sensor comparison</h2>
+<table>
+<tr><th>Sensor</th><th>Output</th><th>Linearity</th><th>Range</th><th>Best used when...</th></tr>
+<tr><td><b>Thermocouple</b></td><td>Voltage (µV–mV)</td><td>Non-linear</td><td>Very wide (1000+°C)</td><td>Extreme temperatures (furnaces, exhaust gas).</td></tr>
+<tr><td><b>RTD (Pt100)</b></td><td>Resistance</td><td class="good">Nearly linear</td><td>-200 to 850°C</td><td>Best accuracy/repeatability, continuous reading.</td></tr>
+<tr><td><b>NTC thermistor</b></td><td>Resistance</td><td>Non-linear</td><td>Narrow (-50 to 150°C)</td><td>Cheap, "good enough" general electronics sensing.</td></tr>
+<tr><td><b>PTC thermistor</b></td><td>Resistance (sharp jump)</td><td class="bad">Not for measuring</td><td>N/A — binary</td><td>Only need YES/NO overheating protection.</td></tr>
+</table>
+
+<h2 id="compare-pos">7. Position sensor comparison</h2>
+<table>
+<tr><th>Sensor</th><th>At power-up</th><th>Resolution</th><th>Cost</th><th>Best used when...</th></tr>
+<tr><td><b>Incremental</b></td><td class="bad">Position unknown, needs homing</td><td>Good (PPR×4)</td><td>Lowest</td><td>Cost matters, safe to home every power-on.</td></tr>
+<tr><td><b>Absolute</b></td><td class="good">Position known instantly</td><td>Good</td><td>Higher</td><td>Homing impossible/unsafe at power-up (e.g. robot arm).</td></tr>
+<tr><td><b>SinCos</b></td><td>Same as incremental</td><td class="good">Very high (interpolated)</td><td>Highest</td><td>Need much finer resolution than raw pulses give.</td></tr>
+</table>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="framework">8. Exam answer framework: "which sensor would you choose?"</h2>
+<p>Walk through these 5 questions, in order — this is exactly the reasoning an examiner is grading for:</p>
+<div class="step"><b>1. What physical quantity am I measuring?</b><br>Current, temperature, position/speed... narrows the whole sensor family immediately.</div>
+<div class="step"><b>2. Do I need galvanic isolation?</b><br>High-voltage/high-power circuit? → rules out shunt resistors, forces Hall/CT/fluxgate.</div>
+<div class="step"><b>3. AC only, or do I also need DC?</b><br>DC needed? → rules out CTs entirely (no changing flux at DC = no output).</div>
+<div class="step"><b>4. How much accuracy do I need, and what's my budget?</b><br>"Good enough" trip → cheap option. Precision feedback → pay for closed-loop/RTD-grade accuracy.</div>
+<div class="step"><b>5. What does the environment demand?</b><br>Extreme temperature, vibration, safe homing at startup, EMC noise nearby — eliminates remaining options.</div>
+
+<div class="box green">
+<p class="label">Exam answer template:</p>
+<p>"I would use [sensor] because the application requires [isolation/AC-DC/accuracy/range/cost reason], which rules out [alternative] since it [specific limitation]."</p>
+<p>Naming the rejected alternative + WHY is what separates full marks from partial credit.</p>
+</div>
+
+</div>
+</body>
+</html>
