@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDS4 Motor Control — Full Notes</title>
+<style>
+  :root {
+    --bg: #ffffff; --ink: #1a1a1a; --sub: #555; --accent: #2563eb;
+    --red: #dc2626; --green: #16a34a; --amber: #d97706; --bgcard: #f8f9fb; --border: #e5e7eb;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--ink); background: var(--bg); line-height: 1.6; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 18px 80px; }
+  h1 { font-size: 26px; margin-bottom: 4px; }
+  .subtitle { color: var(--sub); margin-top: 0; margin-bottom: 24px; }
+  h2 { font-size: 21px; margin-top: 48px; padding-top: 12px; border-top: 3px solid var(--accent); }
+  h3 { font-size: 17px; margin-top: 28px; color: var(--accent); }
+  p { margin: 8px 0; }
+  .box { background: var(--bgcard); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin: 14px 0; }
+  .box.green { background: #f0fdf4; border-color: var(--green); }
+  .box.amber { background: #fffbeb; border-color: var(--amber); }
+  .box.red { background: #fef2f2; border-color: var(--red); }
+  .label { font-weight: 700; }
+  .diagram { display: flex; justify-content: center; margin: 16px 0; }
+  .diagram svg { max-width: 100%; height: auto; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13.5px; }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--bgcard); font-weight: 700; }
+  .good { color: var(--green); font-weight: 600; }
+  .bad { color: var(--red); font-weight: 600; }
+  .toc { background: var(--bgcard); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; }
+  .toc a { display: block; padding: 4px 0; color: var(--accent); text-decoration: none; font-size: 14px; }
+  .toc a:hover { text-decoration: underline; }
+  code { background: #f1f1f1; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+  .step { background: #eff6ff; border: 1px solid var(--accent); border-radius: 8px; padding: 10px 14px; margin: 10px 0; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+  .trap { background: #fef2f2; border: 1px solid var(--red); border-radius: 10px; padding: 12px 16px; margin: 10px 0; }
+  .trap .tag { display: inline-block; background: var(--red); color: white; font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 12px; margin-bottom: 6px; text-transform: uppercase; }
+  .variant { background: #faf5ff; border: 1px solid #9333ea; border-radius: 10px; padding: 12px 16px; margin: 10px 0; }
+  .variant .tag { display: inline-block; background: #9333ea; color: white; font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 12px; margin-bottom: 6px; text-transform: uppercase; }
+  .recurring { background: #fffbeb; border: 1px solid var(--amber); border-radius: 10px; padding: 12px 16px; margin: 10px 0; }
+  .recurring .tag { display: inline-block; background: var(--amber); color: white; font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 12px; margin-bottom: 6px; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>EDS4 — Motor Control, full notes</h1>
+<p class="subtitle">Mechanisms, comparisons, recurring exam questions, AND how those questions could be twisted on a new exam.</p>
+
+<div class="toc">
+  <a href="#types">1. Motor types — construction & how each one actually works</a>
+  <a href="#compare">2. Motor type comparison table (for "identify this motor" questions)</a>
+  <a href="#hbridge">3. H-bridge & PWM driving</a>
+  <a href="#quadrants">4. Four-quadrant operation & regenerative braking</a>
+  <a href="#scr">5. SCR/thyristor switching</a>
+  <a href="#thermal-calc">6. The big combined thermal + motor calculation</a>
+  <a href="#traps">7. Exam trap library</a>
+  <a href="#variants">8. How these questions could be tweaked on a new exam</a>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="types">1. Motor types — construction & how each one works</h2>
+
+<h3>DC brushed motor</h3>
+<div class="diagram">
+<svg viewBox="0 0 360 220" xmlns="http://www.w3.org/2000/svg">
+<circle cx="180" cy="110" r="90" fill="none" stroke="#9ca3af" stroke-width="3"/>
+<text x="180" y="25" text-anchor="middle" font-size="11" fill="#555">stator: permanent magnets (fixed)</text>
+<path d="M 100,60 A90,90 0 0,1 180,20" fill="none" stroke="#dc2626" stroke-width="10"/>
+<path d="M 260,60 A90,90 0 0,0 180,20" fill="none" stroke="#2563eb" stroke-width="10"/>
+<text x="115" y="55" font-size="10" fill="#dc2626">N</text>
+<text x="240" y="55" font-size="10" fill="#2563eb">S</text>
+<circle cx="180" cy="110" r="45" fill="#fde68a" stroke="#92400e" stroke-width="2"/>
+<text x="180" y="105" text-anchor="middle" font-size="10">rotor</text>
+<text x="180" y="120" text-anchor="middle" font-size="10">(armature winding)</text>
+<rect x="160" y="155" width="40" height="14" fill="#374151"/>
+<text x="180" y="185" text-anchor="middle" font-size="10">commutator + brushes</text>
+<text x="180" y="200" text-anchor="middle" font-size="9" fill="#555">(mechanical switching as it spins)</text>
+</svg>
+</div>
+<p><b>Construction:</b> permanent magnets (or field winding) on the stator (fixed), armature winding on the rotor (spinning part), connected to the supply through a commutator + brushes — physical contacts that switch the winding's current direction as the rotor turns.</p>
+<div class="step"><b>Back-EMF:</b> as the rotor spins through the magnetic field, it generates its own voltage (E = Ke·ω) that opposes the supply voltage. Net current = (Va − E)/Ra — this is why current drops as speed rises, and why stall current (ω=0, E=0) is the highest current the motor ever sees: I_stall = Va/Ra.</div>
+<p><b>Torque:</b> T = Kt·Ia (in SI units, Kt = Ke numerically).</p>
+<div class="box red">
+<p><b>Why poor thermal performance:</b> the armature winding (where I²R losses happen) is on the ROTOR — heat generated there has to escape through the rotor shaft/bearings, which is a poor heat path compared to a stator winding that touches the motor housing directly.</p>
+</div>
+
+<h3>BLDC motor (brushless DC)</h3>
+<div class="diagram">
+<svg viewBox="0 0 360 220" xmlns="http://www.w3.org/2000/svg">
+<circle cx="180" cy="110" r="90" fill="none" stroke="#9ca3af" stroke-width="3"/>
+<g stroke="#2563eb" stroke-width="6" fill="none">
+<path d="M 110,50 q15,-10 25,5"/><path d="M 250,50 q-15,-10 -25,5"/>
+<path d="M 90,110 q-10,15 5,25"/><path d="M 270,110 q10,15 -5,25"/>
+</g>
+<text x="180" y="20" text-anchor="middle" font-size="11" fill="#2563eb">stator windings (electronically commutated)</text>
+<circle cx="180" cy="110" r="40" fill="#fde68a" stroke="#92400e" stroke-width="2"/>
+<path d="M 150,90 A40,40 0 0,1 210,90" fill="#dc2626" opacity="0.5"/>
+<text x="180" y="100" text-anchor="middle" font-size="10">rotor: permanent</text>
+<text x="180" y="115" text-anchor="middle" font-size="10">magnets</text>
+<text x="180" y="190" text-anchor="middle" font-size="10" fill="#555">no brushes — Hall sensors/encoder</text>
+<text x="180" y="203" text-anchor="middle" font-size="10" fill="#555">tell the controller when to switch phases</text>
+</svg>
+</div>
+<p><b>Construction:</b> the OPPOSITE arrangement from brushed DC — permanent magnets on the rotor, windings on the stator. No brushes/commutator at all.</p>
+<div class="step"><b>Electronic commutation:</b> since the windings don't physically rotate, something needs to switch which winding is energized as the rotor turns. A controller does this electronically, using rotor-position feedback (Hall sensors or an encoder) to know exactly when to switch each phase.</div>
+<div class="box green">
+<p><b>Why better thermal performance than brushed DC:</b> the windings (where I²R losses happen) are now on the STATOR, which is in direct contact with the motor housing/heatsink — much easier to cool than a spinning rotor.</p>
+</div>
+<p><b>Trade-off:</b> needs a more complex controller (position sensing + multi-phase switching electronics) compared to a simple H-bridge for brushed DC.</p>
+
+<h3>Stepper motor</h3>
+<p><b>Construction:</b> many small magnetic poles (rotor + stator), driven by sequential current pulses through multiple windings — each pulse rotates the shaft by one fixed "step" angle.</p>
+<div class="step"><b>Open-loop positioning:</b> because each step is a known, fixed angle, the controller can just count how many step pulses it sent to know the shaft position — no feedback sensor required (though one can be added for verification).</div>
+<p><b>Trade-off:</b> high torque ripple (torque varies noticeably between steps — vibration/noise), and if the load ever exceeds the motor's torque at a given step (a "missed step"), the open-loop position tracking becomes wrong with no way to detect it.</p>
+
+<h3>Synchronous reluctance motor (SyncRM)</h3>
+<p><b>Construction:</b> stator windings like an induction/BLDC motor, but the rotor has NO magnets and NO windings — just a specially shaped iron core that prefers to align with the rotating stator field (minimizing magnetic reluctance).</p>
+<p><b>Why it shows up in exams as a distractor:</b> no permanent magnets means no demagnetization risk and lower cost, but it needs more sophisticated vector control (similar to FOC) to run smoothly — it's a common wrong-answer option in "identify this motor" questions because it doesn't match the "simple controller" trait that points to brushed DC.</p>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="compare">2. Motor type comparison table</h2>
+<p>Past exams gave you a list of traits and asked "which motor is this?" The trait set used so far always pointed to DC brushed — but the table below lets you reason out ANY combination, not just memorize one answer.</p>
+
+<table>
+<tr><th>Trait</th><th>DC brushed</th><th>BLDC</th><th>Stepper</th><th>SyncRM</th></tr>
+<tr><td><b>Torque ripple</b></td><td class="good">Low (smooth)</td><td>Low-medium</td><td class="bad">High</td><td>Medium</td></tr>
+<tr><td><b>Overload capacity</b></td><td class="good">Good</td><td>Good</td><td class="bad">Poor (missed steps)</td><td>Medium</td></tr>
+<tr><td><b>Controller cost/complexity</b></td><td class="good">Lowest (simple H-bridge)</td><td class="bad">Higher (needs position feedback + phase switching)</td><td>Medium (sequencer, no feedback needed)</td><td class="bad">High (vector control)</td></tr>
+<tr><td><b>Thermal performance</b></td><td class="bad">Poor (windings on rotor)</td><td class="good">Good (windings on stator)</td><td>Medium</td><td class="good">Good</td></tr>
+<tr><td><b>Needs position feedback?</b></td><td>No</td><td class="bad">Yes (Hall/encoder)</td><td>No (open-loop OK)</td><td class="bad">Yes (for vector control)</td></tr>
+<tr><td><b>Demagnetization risk</b></td><td>Yes (if PM field)</td><td>Yes</td><td>Yes (if PM type)</td><td class="good">None (no magnets)</td></tr>
+</table>
+
+<div class="box amber">
+<p><b>How to use this table on an unfamiliar trait list:</b> find the ONE trait that's most restrictive/unusual in the question (e.g. "needs no position sensor" instantly rules out BLDC and SyncRM), then double check the remaining traits against your shortlist.</p>
+</div>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="hbridge">3. H-bridge & PWM driving</h2>
+<div class="diagram">
+<svg viewBox="0 0 320 240" xmlns="http://www.w3.org/2000/svg">
+<rect x="20" y="20" width="280" height="200" fill="none" stroke="#cbd5e1" stroke-width="1.5"/>
+<line x1="80" y1="20" x2="80" y2="70" stroke="#1a1a1a" stroke-width="2"/><rect x="62" y="70" width="36" height="18" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+<line x1="240" y1="20" x2="240" y2="70" stroke="#1a1a1a" stroke-width="2"/><rect x="222" y="70" width="36" height="18" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+<line x1="80" y1="150" x2="80" y2="200" stroke="#1a1a1a" stroke-width="2"/><rect x="62" y="132" width="36" height="18" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+<line x1="240" y1="150" x2="240" y2="200" stroke="#1a1a1a" stroke-width="2"/><rect x="222" y="132" width="36" height="18" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+<line x1="80" y1="88" x2="80" y2="132" stroke="#1a1a1a" stroke-width="2"/><line x1="240" y1="88" x2="240" y2="132" stroke="#1a1a1a" stroke-width="2"/>
+<line x1="80" y1="110" x2="120" y2="110" stroke="#d97706" stroke-width="3"/>
+<path d="M 120,110 q8,-10 16,0 q8,10 16,0 q8,-10 16,0" fill="none" stroke="#d97706" stroke-width="3"/>
+<text x="148" y="95" text-anchor="middle" font-size="10" fill="#d97706">L (series inductor)</text>
+<ellipse cx="200" cy="110" rx="26" ry="18" fill="none" stroke="#16a34a" stroke-width="2"/><text x="200" y="114" text-anchor="middle" font-size="12" fill="#16a34a">M</text>
+<line x1="168" y1="110" x2="174" y2="110" stroke="#1a1a1a" stroke-width="2"/><line x1="226" y1="110" x2="240" y2="110" stroke="#1a1a1a" stroke-width="2"/>
+<path d="M 95,75 l-10,-8 v16 z" fill="none" stroke="#2563eb" stroke-width="1.5"/>
+<text x="160" y="20" text-anchor="middle" font-size="11" fill="#555">+V supply</text><text x="160" y="232" text-anchor="middle" font-size="11" fill="#555">GND</text>
+</svg>
+</div>
+<p><b>Topology:</b> 4 switches (2 legs) around the motor — diagonal pairs switch together to drive current one way or the other through the motor, giving forward/reverse and (with all 4 switches) regenerative braking capability.</p>
+<div class="recurring"><span class="tag">Recurring question</span>
+<p><b>"What does the series inductor L do?"</b> → Smooths the PWM-chopped output into a steadier current — it's a low-pass filter on current, reducing ripple caused by the switching. NOT for storing regen energy, NOT for fault current limiting (common wrong-answer distractors).</p>
+</div>
+<p><b>Flyback/freewheeling diodes:</b> each switch has one in anti-parallel, giving the motor's inductive current a path to flow when a switch turns off — without them, switching off an inductive load creates a damaging voltage spike (L·di/dt).</p>
+<p><b>PWM duty cycle:</b> average voltage across the motor ≈ duty cycle × supply voltage. Higher duty cycle → higher average voltage → higher speed (at a given load).</p>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="quadrants">4. Four-quadrant operation & regenerative braking</h2>
+<div class="diagram">
+<svg viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+<line x1="20" y1="160" x2="300" y2="160" stroke="#9ca3af"/><line x1="160" y1="20" x2="160" y2="300" stroke="#9ca3af"/>
+<text x="305" y="165" font-size="11">speed →</text><text x="165" y="18" font-size="11">torque ↑</text>
+<rect x="160" y="20" width="140" height="140" fill="#f0fdf4" opacity="0.6"/>
+<text x="230" y="55" text-anchor="middle" font-size="12" font-weight="700" fill="#15803d">Q1: motoring</text>
+<text x="230" y="72" text-anchor="middle" font-size="10">+speed, +torque</text>
+<rect x="20" y="20" width="140" height="140" fill="#eff6ff" opacity="0.6"/>
+<text x="90" y="55" text-anchor="middle" font-size="12" font-weight="700" fill="#1d4ed8">Q2: regen braking</text>
+<text x="90" y="72" text-anchor="middle" font-size="10">+speed, −torque</text>
+<rect x="20" y="160" width="140" height="140" fill="#f0fdf4" opacity="0.6"/>
+<text x="90" y="195" text-anchor="middle" font-size="12" font-weight="700" fill="#15803d">Q3: motoring (reverse)</text>
+<text x="90" y="212" text-anchor="middle" font-size="10">−speed, −torque</text>
+<rect x="160" y="160" width="140" height="140" fill="#eff6ff" opacity="0.6"/>
+<text x="230" y="195" text-anchor="middle" font-size="12" font-weight="700" fill="#1d4ed8">Q4: regen braking (reverse)</text>
+<text x="230" y="212" text-anchor="middle" font-size="10">−speed, +torque</text>
+</svg>
+</div>
+<p><b>Quadrant logic:</b> if speed and torque have the SAME sign, the motor is driving the load (motoring). If they have OPPOSITE signs, the motor is being driven BY the load (generating/braking) — the machine acts as a generator, converting kinetic energy back to electrical energy.</p>
+<div class="recurring"><span class="tag">Recurring trap</span>
+<p><b>"Regenerative braking means the motor doesn't heat up."</b> → False. Even while regenerating, current still flows through the armature resistance, so I²R copper losses still occur — the motor still heats up. Regen braking is about energy recovery (vs. dumping it in a brake resistor), not about eliminating heat generation.</p>
+</div>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="scr">5. SCR/thyristor switching</h2>
+<div class="diagram">
+<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+<rect x="60" y="10" width="40" height="30" fill="none" stroke="#1a1a1a" stroke-width="2"/><text x="80" y="29" text-anchor="middle" font-size="11">P</text>
+<rect x="60" y="40" width="40" height="30" fill="none" stroke="#1a1a1a" stroke-width="2"/><text x="80" y="59" text-anchor="middle" font-size="11">N</text>
+<rect x="60" y="70" width="40" height="30" fill="none" stroke="#1a1a1a" stroke-width="2"/><text x="80" y="89" text-anchor="middle" font-size="11">P</text>
+<rect x="60" y="100" width="40" height="30" fill="none" stroke="#1a1a1a" stroke-width="2"/><text x="80" y="119" text-anchor="middle" font-size="11">N</text>
+<text x="80" y="5" text-anchor="middle" font-size="11">Anode</text><text x="80" y="148" text-anchor="middle" font-size="11">Cathode</text>
+<line x1="100" y1="85" x2="135" y2="85" stroke="#1a1a1a" stroke-width="2"/><text x="140" y="89" font-size="11">Gate</text>
+</svg>
+</div>
+<p><b>How it works:</b> a 4-layer PNPN device. Once gate-triggered while forward-biased, it latches ON — current keeps flowing even after the gate pulse is removed. It only turns OFF when the current through it drops below the holding current (I_H).</p>
+<div class="recurring"><span class="tag">Recurring question</span>
+<p><b>"Can an SCR-based switch handle DC loads?"</b> → No, AC only. For DC, current never naturally crosses zero, so there's no moment where the SCR's current drops below I_H — once triggered, it stays on forever (or until you forcibly interrupt the circuit some other way). AC current crosses zero every half-cycle, giving a natural turn-off point.</p>
+</div>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="thermal-calc">6. The big combined thermal + motor calculation</h2>
+<p>This is the highest-value open question type (15-16 points in past exams) — it chains motor torque/current relationships together with thermal limits. Here's the general method, since the EXACT scenario will likely change:</p>
+
+<div class="diagram">
+<svg viewBox="0 0 700 140" xmlns="http://www.w3.org/2000/svg">
+<rect x="0" y="40" width="120" height="60" rx="8" fill="#eff6ff" stroke="#2563eb"/>
+<text x="60" y="65" text-anchor="middle" font-size="11" font-weight="700">Given: load</text>
+<text x="60" y="82" text-anchor="middle" font-size="10">torque or power</text>
+<text x="128" y="75" font-size="16">→</text>
+<rect x="145" y="40" width="120" height="60" rx="8" fill="#fefce8" stroke="#d97706"/>
+<text x="205" y="65" text-anchor="middle" font-size="11" font-weight="700">Current</text>
+<text x="205" y="82" text-anchor="middle" font-size="10">I = T / Kt</text>
+<text x="273" y="75" font-size="16">→</text>
+<rect x="290" y="40" width="120" height="60" rx="8" fill="#fef2f2" stroke="#dc2626"/>
+<text x="350" y="65" text-anchor="middle" font-size="11" font-weight="700">Copper loss</text>
+<text x="350" y="82" text-anchor="middle" font-size="10">P = I² × Ra</text>
+<text x="418" y="75" font-size="16">→</text>
+<rect x="435" y="40" width="120" height="60" rx="8" fill="#f0fdf4" stroke="#16a34a"/>
+<text x="495" y="65" text-anchor="middle" font-size="11" font-weight="700">Temp rise</text>
+<text x="495" y="82" text-anchor="middle" font-size="10">ΔT = P × Rth</text>
+<text x="563" y="75" font-size="16">→</text>
+<rect x="580" y="40" width="120" height="60" rx="8" fill="#faf5ff" stroke="#9333ea"/>
+<text x="640" y="65" text-anchor="middle" font-size="11" font-weight="700">Check vs limit</text>
+<text x="640" y="82" text-anchor="middle" font-size="10">T_max (insulation class)</text>
+</svg>
+</div>
+
+<div class="step"><b>Step 1 — find the relevant current.</b> This could be: stall current (I = Va/Ra, at ω=0), nominal/rated current (I = T_nominal/Kt), or overload current (often given as a % above nominal, or recalculated from an overload torque/power figure). <b>Read carefully which scenario the question describes</b> — this is the step most likely to change between exam versions.</div>
+<div class="step"><b>Step 2 — copper losses.</b> P_copper = I² × Ra. If the question also gives "no-load losses" or friction torque × ω, ADD that mechanical/iron loss term too — don't forget it (seen in the November exam's part (c), where final temperature combined I²R AND friction torque × ω).</div>
+<div class="step"><b>Step 3 — steady-state temperature rise.</b> ΔT = P_total × Rth. Add ambient temperature to get the actual winding temperature.</div>
+<div class="step"><b>Step 4 — check against the limit.</b> Compare against the insulation class max (B=130°C, F=155°C, H=180°C) or a given max winding temperature. If it's exceeded, the motor can't run continuously at that load — that's where the thermal TIME CONSTANT comes in.</div>
+<div class="step"><b>Step 5 — if it's a transient/duty-cycle question:</b> use θ(t) = θ_start + (θ_final − θ_start)(1 − e<sup>−t/τ</sup>) to find either the temperature after a given time, OR (more commonly asked) solve for the MAXIMUM TIME t before the winding would exceed its limit, by rearranging for t: <code>t = −τ · ln(1 − (T_limit − θ_start)/(θ_final − θ_start))</code>.</div>
+
+<div class="box green">
+<p><b>Worked-style walkthrough (generic numbers, same method as the real exams):</b><br>
+Given: Kt = 0.05 N·m/A, Ra = 1.2 Ω, Rth = 14°C/W, τ_th = 28 s, ambient = 25°C, insulation max = 125°C, stalled at 3 A (current-limited).<br>
+1. P_copper = I²Ra = 3² × 1.2 = 10.8 W.<br>
+2. ΔT_final (if it ran forever at this current) = P × Rth = 10.8 × 14 = 151.2°C → final temp = 25 + 151.2 = 176.2°C — way above the 125°C limit, so it CANNOT run here forever.<br>
+3. Solve for max time: (125−25)/(176.2−25) = 0.661 → 1 − 0.661 = 0.339 → t = −28 × ln(0.339) ≈ <b>30.2 s</b> before the winding hits its limit.</p>
+</div>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="traps">7. Exam trap library</h2>
+
+<div class="trap"><span class="tag">Motor ID trap</span>
+<p>"Poor thermal performance + low torque ripple + simple controller" → always points to DC brushed, not BLDC. The thermal trait is the tell — BLDC has GOOD thermal performance (stator windings).</p>
+</div>
+
+<div class="trap"><span class="tag">H-bridge trap</span>
+<p>"The series inductor stores energy for regenerative braking." → False. It's a current-smoothing low-pass filter, full stop. Energy storage/recovery happens at the DC bus capacitor level, not this inductor.</p>
+</div>
+
+<div class="trap"><span class="tag">Regen braking trap</span>
+<p>"Regenerative braking means the motor doesn't heat up." → False. I²R losses still occur — regen is about WHERE the energy goes (back to supply vs wasted in a resistor), not about eliminating losses.</p>
+</div>
+
+<div class="trap"><span class="tag">SCR trap</span>
+<p>"An SCR/thyristor switch works fine for both AC and DC loads." → False. No natural zero-crossing on DC means it can't turn off — AC only.</p>
+</div>
+
+<div class="trap"><span class="tag">Thermal calc trap</span>
+<p>Forgetting to ADD friction/iron losses (Tfriction × ω) on top of I²R copper losses when the question gives you a friction torque or no-load loss figure — this changes the final answer noticeably.</p>
+</div>
+
+<div class="trap"><span class="tag">Velocity profile trap</span>
+<p>"A parabolic velocity profile is optimal for point-to-point motion." → False, generally. Trapezoidal is fastest for given vmax/amax; S-curve (not pure parabolic) is used when jerk must be limited.</p>
+</div>
+
+<hr>
+<!-- ============================================================ -->
+<h2 id="variants">8. How these questions could be tweaked on a new exam</h2>
+<p>Don't just memorize "the answer is DC brushed" — here's how each recurring question type could be reshaped, and how to stay ready for it:</p>
+
+<div class="variant"><span class="tag">Variant</span>
+<p><b>Motor-ID question, but describing a DIFFERENT motor.</b> Instead of "poor thermal performance," it could say "needs Hall sensors for commutation" (→ BLDC) or "can position itself with no feedback sensor at all" (→ stepper) or "no risk of demagnetization" (→ SyncRM). Use the comparison table in section 2 to reason through ANY trait combination, not just the one you've seen.</p>
+</div>
+
+<div class="variant"><span class="tag">Variant</span>
+<p><b>H-bridge question about a DIFFERENT component.</b> Instead of the series inductor, they could ask about the flyback diodes ("what happens if you remove them?" → voltage spike destroys the switch) or about what happens if both switches in one leg turn on simultaneously (a "shoot-through" short circuit across the supply).</p>
+</div>
+
+<div class="variant"><span class="tag">Variant</span>
+<p><b>Regen braking question from a different angle.</b> Instead of "does it heat up," they might ask you to identify which QUADRANT a given speed/torque combination falls into, or ask you to calculate the REGENERATED power/energy (P = T × ω, with both negative-relative-to-motoring) during a braking event.</p>
+</div>
+
+<div class="variant"><span class="tag">Variant</span>
+<p><b>SCR question about timing instead of AC/DC capability.</b> Could ask about the holding current I_H or latching current I_L directly, or about phase-controlled rectification (firing angle controlling average DC output voltage from an AC supply) instead of just "can it switch DC."</p>
+</div>
+
+<div class="variant"><span class="tag">Variant</span>
+<p><b>Thermal+motor calculation with a DIFFERENT starting scenario.</b> Instead of starting from a stalled/current-limited motor, it could give you a RUNNING motor at a specific RPM and load torque (requiring you to first find current via T=Kt·I, possibly factor in back-EMF to find required voltage too), or a cyclic duty-cycle scenario (ON for some time at high load, OFF or low-load for some time, asking for the equivalent continuous power or final steady-state temperature) — same underlying method as section 6, just enter the chain at a different point. <b>Always identify: what current flows? what are ALL the loss sources? what's the time behavior (steady-state vs transient)?</b> — that question triage works regardless of how the scenario is dressed up.</p>
+</div>
+
+<div class="variant"><span class="tag">Variant</span>
+<p><b>A totally new open question</b> could combine motor control with GEARBOX reflection (N² rule) — e.g. "a motor drives a load through a gearbox; given load torque and inertia, find required motor torque to accelerate the combined system" — this merges Motor Control with the Drive Systems topic. Don't mentally silo topics; the exam likes to combine them.</p>
+</div>
+
+</div>
+</body>
+</html>
