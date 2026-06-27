@@ -28,6 +28,16 @@
   .symbol-card .name { font-weight: 700; font-size: 15px; margin-bottom: 8px; }
   .symbol-card svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
   .symbol-card .caption { font-size: 13px; color: var(--sub); margin-top: 8px; text-align: center; }
+  .symbol-card details { margin-top: 14px; border-top: 1px dashed var(--border); padding-top: 10px; }
+  .symbol-card summary { cursor: pointer; font-weight: 700; color: var(--accent); padding: 6px 2px; list-style: none; }
+  .symbol-card summary::-webkit-details-marker { display: none; }
+  .symbol-card summary::before { content: "▸ "; }
+  .symbol-card details[open] summary::before { content: "▾ "; }
+  .symbol-card details[open] summary { color: var(--ink); }
+  .detail-content { padding: 8px 2px 2px; font-size: 14px; color: #333; text-align: left; }
+  .detail-content .step { background: #eff6ff; border: 1px solid var(--accent); border-radius: 8px; padding: 8px 12px; margin: 8px 0; font-size: 13px; }
+  .detail-content .mini-trap { background: #fef2f2; border: 1px solid var(--red); border-radius: 8px; padding: 8px 12px; margin: 10px 0; font-size: 13px; }
+  .detail-content .mini-trap .tag { display: inline-block; background: var(--red); color: white; font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 10px; margin-bottom: 4px; text-transform: uppercase; }
   .toc { background: var(--bgcard); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; }
   .toc a { display: block; padding: 4px 0; color: var(--accent); text-decoration: none; font-size: 14px; }
   .family-tree { font-family: monospace; background: #0f172a; color: #e2e8f0; padding: 16px; border-radius: 10px;
@@ -45,7 +55,7 @@
   <a href="#family">1. Current sensor family tree (CT ≠ Hall!)</a>
   <a href="#symbols-current">2. Current sensor circuit symbols</a>
   <a href="#symbols-temp">3. Temperature sensor circuit symbols</a>
-  <a href="#symbols-pos">4. Position sensor circuit symbols</a>
+  <a href="#symbols-pos">4. Position sensor circuit symbols (incremental, absolute, sincos)</a>
   <a href="#dc-question">5. Which sensors work with DC, and why</a>
   <a href="#traps">6. Exam trap library</a>
 </div>
@@ -91,6 +101,18 @@
 <text x="170" y="13" text-anchor="middle" font-size="9" fill="#2563eb">V</text>
 </svg>
 <div class="caption">The zigzag = a normal resistor symbol. Blue wires on top = the separate Kelvin sense connection, going to a voltmeter.</div>
+<details>
+<summary>Full details: what it is, how it works, why the wiring matters</summary>
+<div class="detail-content">
+<p><b>What it is:</b> a resistor with a precisely-known, very small resistance value (often milliohms), placed directly in series with the current path you want to measure.</p>
+<p><b>How it works:</b> plain Ohm's law — V = I·R. Since R is known precisely, measuring the voltage drop V across it tells you I = V/R directly.</p>
+<p><b>The catch:</b> the wires connecting the resistor to the rest of the circuit also have their own small resistance. If you measured voltage using the SAME two wires that carry the big current, the wire resistance would add to your reading and throw off the result.</p>
+<div class="step"><b>The fix — 4-wire (Kelvin) connection:</b> use two separate, thin wires just for sensing the voltage, connected directly at the resistor's edges. Almost no current flows down these sense wires (the meter's input impedance is huge), so they don't pick up any extra voltage drop from wire resistance — you get a clean, accurate reading of just the resistor's own drop.</div>
+<p><b>Isolation:</b> none — the shunt sits directly in the power path, electrically connected to it.</p>
+<p><b>AC/DC:</b> works on both, since Ohm's law doesn't care about waveform shape.</p>
+<div class="mini-trap"><span class="tag">Trap</span><br>"You can measure shunt voltage with the same two wires that carry load current." → False for precision work — lead/contact resistance adds error; use 4-wire Kelvin sensing.</div>
+</div>
+</details>
 </div>
 
 <div class="symbol-card">
@@ -108,6 +130,17 @@
 <text x="140" y="123" text-anchor="middle" font-size="10">burden R</text>
 </svg>
 <div class="caption">The circle = the donut-shaped core. The wire just passes straight through (1 turn). The wound coil at the bottom is the secondary, feeding a burden resistor.</div>
+<details>
+<summary>Full details: what it is, how it works, why DC fails</summary>
+<div class="detail-content">
+<p><b>What it is:</b> a transformer where the wire carrying the unknown current simply passes through the core (usually just 1 turn) as the primary, with a secondary winding of many turns wrapped around the same core.</p>
+<p><b>How it works:</b> a CHANGING current creates a CHANGING magnetic flux in the core. That changing flux induces a voltage in the secondary winding (Faraday's law), which drives a secondary current through a small "burden" resistor. The relationship follows ampere-turn balance: N₁·I₁ = N₂·I₂.</p>
+<div class="step"><b>Why DC doesn't work:</b> a steady DC current produces a steady, unchanging flux. No CHANGE in flux means no induced voltage at all (Faraday's law needs dΦ/dt). CTs are AC-only by their basic operating principle, not as a design limitation.</div>
+<p><b>Isolation:</b> yes — the only coupling is magnetic, through the core.</p>
+<p><b>Family:</b> inductive/transformer principle. NOT related to the Hall effect at all — different physics entirely from Hall sensors.</p>
+<div class="mini-trap"><span class="tag">Trap</span><br>"A current transformer can measure DC current." → False. Needs changing flux; steady DC gives zero induced voltage.</div>
+</div>
+</details>
 </div>
 
 <div class="symbol-card">
@@ -122,6 +155,20 @@
 <line x1="160" y1="70" x2="200" y2="70" stroke="#16a34a" stroke-width="2"/>
 </svg>
 <div class="caption">A small rectangular "Hall" chip symbol sits beside (or around) the conductor, with two extra output pins for V_out — no direct electrical connection to the power wire.</div>
+<details>
+<summary>Full details: the cause-and-effect chain, step by step</summary>
+<div class="detail-content">
+<p><b>What it is:</b> a small semiconductor element placed in an air gap right next to the current-carrying conductor, with no feedback correction (that's what makes it "open-loop").</p>
+<div class="step">1. Current I flows through a wire.</div>
+<div class="step">2. Any current creates a magnetic field around itself — bigger I → stronger field B.</div>
+<div class="step">3. That field passes through the small Hall sensor element sitting in the air gap.</div>
+<div class="step">4. Inside the Hall element, a small bias current is already flowing. The magnetic field pushes those moving charges sideways (the Hall effect).</div>
+<div class="step">5. That sideways push piles up charge on one side, creating a small sideways voltage V_H.</div>
+<p>Net result: bigger I → stronger B → bigger V_H. Measuring V_H tells you I, without ever touching the wire electrically — that's the galvanic isolation.</p>
+<p><b>Weakness:</b> no feedback to correct for the core's magnetic hysteresis (leftover flux/remanence) or the Hall element's own temperature drift — accuracy is moderate, not great.</p>
+<p><b>AC/DC:</b> works on both — it senses the field's instantaneous strength directly, not a change in it.</p>
+</div>
+</details>
 </div>
 
 <div class="symbol-card">
@@ -140,6 +187,20 @@
 <circle cx="160" cy="75" r="8" fill="#fef3c7" stroke="#92400e"/>
 </svg>
 <div class="caption">Same core + Hall arrangement, but now with an extra feedback winding and a small amplifier box drawn alongside — this extra loop is the visual giveaway it's closed-loop, not open-loop.</div>
+<details>
+<summary>Full details: the tug-of-war that always ends in a tie</summary>
+<div class="detail-content">
+<p><b>What it is:</b> a Hall element (same family as open-loop) PLUS a feedback winding driven by an amplifier — it's still fundamentally a Hall sensor, just with active correction added.</p>
+<div class="step">1. The unknown primary current I₁ flows through N₁ turns (often just 1 — the wire itself). This creates magnetic flux in the core.</div>
+<div class="step">2. The amplifier drives current I₂ through the feedback winding (N₂ turns), in the OPPOSITE direction, creating opposing flux.</div>
+<div class="step">3. A flux detector (built around the Hall element) constantly checks: is the net flux exactly zero? The amplifier keeps adjusting I₂ until yes.</div>
+<div class="step">4. Like a tug-of-war: I₁'s flux pulls one way, I₂'s flux pulls back exactly hard enough that the net flux sits at zero.</div>
+<p>Because net flux = 0, the two opposing ampere-turns must be exactly equal: <b>N₁·I₁ = N₂·I₂</b>. So instead of measuring the big, hard-to-handle I₁ directly, you measure the small, easy I₂ (just a resistor + voltmeter) and calculate I₁ = I₂ × (N₂/N₁).</p>
+<p><b>Why it's more accurate than open-loop:</b> because the core's operating point is constantly pinned near zero flux, it barely traces the hysteresis loop at all — so hysteresis-related offset error and most temperature drift effects get cancelled out by the feedback.</p>
+<p><b>Trade-off:</b> needs its own power supply, amplifier, and feedback winding — more expensive and complex than open-loop.</p>
+<div class="mini-trap"><span class="tag">Trap</span><br>"At balance, N₁·I₁ &lt; N₂·I₂." → False. It must be an exact EQUALITY — that's the entire point of driving flux to zero.</div>
+</div>
+</details>
 </div>
 
 <div class="symbol-card">
@@ -153,6 +214,18 @@
 <text x="160" y="120" text-anchor="middle" font-size="10" fill="#d97706">excitation winding (driven by AC oscillator)</text>
 </svg>
 <div class="caption">An oval/racetrack-shaped core (so it saturates predictably), with an excitation winding drawn directly on it — plus, in full diagrams, a separate pickup winding and oscillator block.</div>
+<details>
+<summary>Full details: how distorting a signal on purpose measures a field</summary>
+<div class="detail-content">
+<p><b>What it is:</b> a small core driven repeatedly into full magnetic saturation by an AC excitation winding, with a second pickup winding watching what the core does. NOT a Hall element — a completely separate family from Hall sensors.</p>
+<div class="step">1. With NO external field present, the excitation current pushes the core into saturation symmetrically — same point in the positive half of the AC cycle as the negative half. The pickup winding sees a clean, symmetric signal.</div>
+<div class="step">2. If an external magnetic field IS present (created by the current you actually want to measure), it adds a constant bias on top of the AC excitation. Now the core saturates slightly EARLIER in one half-cycle and slightly LATER in the other — the symmetry breaks.</div>
+<div class="step">3. This broken symmetry shows up in the pickup winding's output as a "2nd harmonic" component (a distortion at exactly twice the excitation frequency) that simply isn't there when there's no external field.</div>
+<div class="step">4. Electronics inside the sensor measure the SIZE of that 2nd-harmonic distortion — and that size is directly proportional to the strength of the external field, i.e. proportional to the current being measured.</div>
+<p><b>AC/DC:</b> works on both — the field being measured doesn't need to change at all, only the internally-generated excitation needs to be AC.</p>
+<p><b>Trade-off:</b> extremely sensitive and low-drift, but needs its own excitation oscillator and detection electronics — the most expensive current sensor option.</p>
+</div>
+</details>
 </div>
 
 <!-- ============================================================ -->
@@ -170,6 +243,16 @@
 <text x="195" y="50" font-size="10">hot junction</text>
 </svg>
 <div class="caption">Two different-colored wires meeting at a single point (the junction) — always drawn as exactly two dissimilar conductors joined, never more.</div>
+<details>
+<summary>Full details: the Seebeck effect</summary>
+<div class="detail-content">
+<p><b>What it is:</b> a junction of two dissimilar metals.</p>
+<p><b>How it works:</b> the temperature difference between the hot (measuring) junction and the cold (reference) junction generates a small voltage (µV to mV range) — this is the Seebeck effect. It outputs a VOLTAGE, never a current by itself (current only flows if you connect it into a closed loop with some resistance).</p>
+<p><b>Cold junction compensation (CJC):</b> the reading also depends on the temperature of the "cold" reference junction (where the thermocouple wires meet your copper measurement leads), so accurate readings need to either hold that reference at a known temperature or measure and mathematically correct for it.</p>
+<p><b>Range:</b> very wide — can survive 1000+°C, used for furnaces/exhaust gas where other sensors would melt.</p>
+<div class="mini-trap"><span class="tag">Trap</span><br>"A thermocouple generates a current proportional to temperature." → False. It generates a VOLTAGE (watch for this exact word swap between exam versions).</div>
+</div>
+</details>
 </div>
 
 <div class="symbol-card">
@@ -183,6 +266,17 @@
 <text x="140" y="95" text-anchor="middle" font-size="9" fill="#dc2626">↑ heat sensitive</text>
 </svg>
 <div class="caption">A plain resistor box, just labeled "RTD" or "Pt100" — the symbol itself doesn't show anything fancy, only the label tells you it's temperature-sensitive.</div>
+<details>
+<summary>Full details: why resistance rises with heat, nearly linearly</summary>
+<div class="detail-content">
+<p><b>What it is:</b> a length of pure metal (almost always platinum), shaped into a thin wire or printed film, with a precisely known resistance at a reference temperature (Pt100 = exactly 100Ω at 0°C).</p>
+<p><b>How it works:</b> as temperature rises, the metal's atoms vibrate more (lattice vibration). Electrons trying to flow through the metal collide with these vibrating atoms more often, which resists their flow more — so resistance rises. This relationship is nearly straight-line (linear) over a wide range.</p>
+<p><b>In practice:</b> pass a small, known excitation current through it, measure the resulting voltage, calculate R = V/I, then look up/calculate temperature from R using the sensor's standard curve.</p>
+<div class="step">Same lead-resistance problem as the shunt resistor — RTDs also use 4-wire Kelvin connections for best accuracy, and a small excitation current to avoid self-heating error (the excitation current itself heating the sensor above true ambient).</div>
+<p><b>Range:</b> -200 to 850°C, very good accuracy/repeatability.</p>
+<div class="mini-trap"><span class="tag">Trap</span><br>"An RTD directly outputs a voltage proportional to temperature." → False. Its RESISTANCE changes; you must excite it with a current and measure the resulting voltage drop to back-calculate resistance, then temperature.</div>
+</div>
+</details>
 </div>
 
 <div class="symbol-card">
@@ -196,6 +290,16 @@
 <text x="140" y="98" text-anchor="middle" font-size="11">t°</text>
 </svg>
 <div class="caption">A resistor box with a diagonal arrow through it (like a variable resistor) plus a small "t°" label — this diagonal-arrow-through-a-box is the standard symbol for any temperature-dependent resistor (NTC or PTC; the label/datasheet tells you which).</div>
+<details>
+<summary>Full details: NTC (measures) vs PTC (trips) — very different jobs</summary>
+<div class="detail-content">
+<p><b>NTC thermistor — what it is:</b> a small bead/disk made from a semiconductor ceramic (metal oxide), not a pure metal.</p>
+<p><b>NTC — how it works:</b> in a semiconductor, charge carriers (electrons) need a bit of thermal energy to become free to move at all. As temperature rises, MORE electrons get enough energy to break free and carry current — so resistance FALLS, and falls fast (exponentially), not linearly.</p>
+<p><b>NTC — trade-off:</b> very sensitive (big resistance swing per °C, easy to detect) but strongly non-linear and only accurate over a fairly narrow temperature window (-50 to 150°C) — needs a correction formula or lookup table for an accurate reading.</p>
+<div class="step"><b>PTC thermistor — completely different job:</b> resistance stays low and flat for a long time, then suddenly rockets upward right at a trip temperature (e.g. 130°C). The drive circuit just watches for "did resistance jump?" — like a tripwire, not a thermometer. It CANNOT give an accurate continuous temperature reading.</div>
+<div class="mini-trap"><span class="tag">Trap</span><br>"A PTC thermistor accurately measures temperature." → False, every time you see this. PTC = binary protection trip, not a precision sensor.</div>
+</div>
+</details>
 </div>
 
 <!-- ============================================================ -->
@@ -216,6 +320,18 @@
 <text x="275" y="89" font-size="11">Z</text>
 </svg>
 <div class="caption">A box labeled ENC with a shaft going in on one side, and three labeled output lines (A, B, Z) coming out the other side.</div>
+<details>
+<summary>Full details: how quadrature decoding actually counts position</summary>
+<div class="detail-content">
+<p><b>What it is:</b> a rotating slotted disk passing between an LED and two photodetectors, A and B, placed so they're offset by exactly ¼ of one slot's width. An optional Z (index) detector gives one pulse per revolution.</p>
+<div class="step">As each slot passes, A switches on/off. Because B sits ¼ slot away, B switches at a DIFFERENT moment than A.</div>
+<div class="step">Counting EVERY edge (rising + falling) on BOTH A and B gives 4 counts per slot. So a 50-slot disk ("50 PPR") gives 50 × 4 = 200 counts/rev with standard ×4 quadrature decoding.</div>
+<div class="step"><b>Direction:</b> if the disk spins one way, A's edge happens first, then B follows ¼ slot later. The other way around, B leads. The controller just checks "which one changed first?" — that single fact gives direction. The Z channel is NOT involved in direction sensing.</div>
+<p><b>At power-up:</b> position is unknown — needs a homing move to a reference point before absolute position is known.</p>
+<div class="mini-trap"><span class="tag">Trap</span><br>"You need the Z channel to detect direction." → False. Direction comes purely from A/B phase order.</div>
+<div class="mini-trap"><span class="tag">Trap</span><br>"50 PPR = 50 counts/rev." → False unless the question specifies single-edge (×1) counting — standard ×4 decoding gives 200 counts/rev.</div>
+</div>
+</details>
 </div>
 
 <div class="symbol-card">
@@ -232,6 +348,38 @@
 <text x="275" y="68" font-size="11">bus / code out</text>
 </svg>
 <div class="caption">Same idea as incremental, but instead of separate A/B/Z lines, the output is usually a bundled multi-bit bus or a single serial interface (e.g. SSI) carrying the position code.</div>
+<details>
+<summary>Full details: why it knows its position instantly</summary>
+<div class="detail-content">
+<p><b>What it is:</b> a disk with several concentric rings of light/dark segments (not just one ring like incremental), each ring read by its own sensor.</p>
+<div class="step">At any instant, the pattern of light/dark across ALL rings together forms a unique code — and every possible shaft angle has its own, different code. Reading all sensors once immediately tells the controller the exact angle — no counting pulses, no homing move needed.</div>
+<p><b>Why more rings = better resolution:</b> each extra ring doubles the number of distinguishable codes (like an extra binary digit), so finer resolution needs more rings/sensors — part of why these cost more than incremental encoders.</p>
+<div class="step"><b>Gray code:</b> in practice a special pattern called Gray code is used instead of plain binary, so only ONE ring ever changes at a time between adjacent positions — preventing brief, wildly wrong readings during the exact instant of a transition.</div>
+<p><b>At power-up:</b> position known instantly — no homing needed. This is the key advantage over incremental, used when homing is impossible or unsafe (e.g. a robot arm that must not move blindly at startup).</p>
+</div>
+</details>
+</div>
+
+<div class="symbol-card">
+<div class="name">SinCos encoder</div>
+<svg viewBox="0 0 320 140" xmlns="http://www.w3.org/2000/svg">
+<path d="M 20,70 Q 40,40 60,70 Q 80,100 100,70 Q 120,40 140,70 Q 160,100 180,70" fill="none" stroke="#2563eb" stroke-width="3"/>
+<text x="20" y="30" font-size="11" fill="#2563eb">sin</text>
+<path d="M 20,100 Q 40,130 60,100 Q 80,70 100,100 Q 120,130 140,100 Q 160,70 180,100" fill="none" stroke="#d97706" stroke-width="3"/>
+<text x="20" y="125" font-size="11" fill="#d97706">cos</text>
+<rect x="200" y="50" width="80" height="50" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+<text x="240" y="80" text-anchor="middle" font-size="11" fill="#16a34a">atan2</text>
+</svg>
+<div class="caption">Two smooth wave outputs (sin and cos) instead of sharp square pulses, often feeding into an interpolation block labeled atan2 or similar.</div>
+<details>
+<summary>Full details: how a smooth wave gives finer resolution than a pulse</summary>
+<div class="detail-content">
+<p><b>What it is:</b> physically similar to an incremental encoder (disk + LED + photosensors), but the optics are designed differently so the output is a smooth, continuous wave instead of a sharp on/off square pulse.</p>
+<div class="step">The disk's grating pattern is filtered through a "reticle" so the light intensity reaching the sensor rises and falls smoothly (close to a sine wave) as the disk rotates, instead of switching abruptly. A second sensor, offset by a quarter-period, picks up the cosine version of the same signal.</div>
+<div class="step"><b>Why this gives finer resolution:</b> with a plain on/off pulse, all you know between pulses is "somewhere in this slot." With continuous sin and cos VALUES, you can calculate the exact angle within that slot using angle = atan2(sin, cos) — math gives a precise sub-pulse position, called interpolation. Same physical line-count on the disk, but far finer effective resolution.</div>
+<p><b>Cost:</b> highest of the three encoder types, due to the extra analog signal conditioning and interpolation electronics needed.</p>
+</div>
+</details>
 </div>
 
 <!-- ============================================================ -->
