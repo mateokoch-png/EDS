@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDS4 Sensor Symbols & Exam Traps</title>
+<style>
+  :root {
+    --bg: #ffffff; --ink: #1a1a1a; --sub: #555; --accent: #2563eb;
+    --red: #dc2626; --green: #16a34a; --amber: #d97706; --bgcard: #f8f9fb; --border: #e5e7eb;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--ink); background: var(--bg); line-height: 1.6; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 18px 80px; }
+  h1 { font-size: 26px; margin-bottom: 4px; }
+  .subtitle { color: var(--sub); margin-top: 0; margin-bottom: 24px; }
+  h2 { font-size: 21px; margin-top: 48px; padding-top: 12px; border-top: 3px solid var(--accent); }
+  h3 { font-size: 16px; margin-top: 26px; color: var(--accent); }
+  p { margin: 8px 0; }
+  .box { background: var(--bgcard); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin: 14px 0; }
+  .box.red { background: #fef2f2; border-color: var(--red); }
+  .box.green { background: #f0fdf4; border-color: var(--green); }
+  .trap { background: #fef2f2; border: 1px solid var(--red); border-radius: 10px; padding: 12px 16px; margin: 10px 0; }
+  .trap .tag { display: inline-block; background: var(--red); color: white; font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 12px; margin-bottom: 6px; text-transform: uppercase; }
+  .symbol-card { border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin: 16px 0; background: #fafafa; }
+  .symbol-card .name { font-weight: 700; font-size: 15px; margin-bottom: 8px; }
+  .symbol-card svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+  .symbol-card .caption { font-size: 13px; color: var(--sub); margin-top: 8px; text-align: center; }
+  .toc { background: var(--bgcard); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; }
+  .toc a { display: block; padding: 4px 0; color: var(--accent); text-decoration: none; font-size: 14px; }
+  .family-tree { font-family: monospace; background: #0f172a; color: #e2e8f0; padding: 16px; border-radius: 10px;
+    font-size: 13px; line-height: 1.8; overflow-x: auto; white-space: pre; }
+  code { background: #f1f1f1; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Sensor families, circuit symbols &amp; exam traps</h1>
+<p class="subtitle">So you stop mixing up which sensor belongs to which family — and recognize them when they show up in a diagram.</p>
+
+<div class="toc">
+  <a href="#family">1. Current sensor family tree (CT ≠ Hall!)</a>
+  <a href="#symbols-current">2. Current sensor circuit symbols</a>
+  <a href="#symbols-temp">3. Temperature sensor circuit symbols</a>
+  <a href="#symbols-pos">4. Position sensor circuit symbols</a>
+  <a href="#dc-question">5. Which sensors work with DC, and why</a>
+  <a href="#traps">6. Exam trap library</a>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="family">1. Current sensor family tree</h2>
+<p>These are <b>not</b> all the same thing. They use three completely different physical principles:</p>
+
+<div class="family-tree">Current sensors
+│
+├── RESISTIVE  (Ohm's law: V = I·R)
+│   └── Shunt resistor
+│
+├── INDUCTIVE / TRANSFORMER  (Faraday's law: needs CHANGING flux)
+│   └── Current Transformer (CT)        ← AC ONLY
+│
+└── MAGNETIC FIELD SENSING  (reacts to the field's strength directly,
+    works fine on steady/DC fields too)
+    ├── Hall-effect family
+    │   ├── Open-loop Hall sensor
+    │   └── Closed-loop / Zero-flux Hall sensor  (Hall element + feedback loop)
+    │
+    └── Fluxgate sensor   (saturable-core + AC excitation, NOT a Hall element)</div>
+
+<div class="box red">
+<p class="label"><b>The mix-up to avoid:</b> a Current Transformer (CT) is in the <i>inductive/transformer</i> family — it has nothing to do with the Hall effect. "Zero-flux" / "closed-loop" sensors ARE built around a Hall element (plus a feedback loop) — so closed-loop sensors ARE part of the Hall family. Fluxgate is its own separate thing — it uses core saturation, not the Hall effect at all.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="symbols-current">2. Current sensor circuit symbols</h2>
+
+<div class="symbol-card">
+<div class="name">Shunt resistor</div>
+<svg viewBox="0 0 320 100" xmlns="http://www.w3.org/2000/svg">
+<line x1="20" y1="50" x2="100" y2="50" stroke="#1a1a1a" stroke-width="2"/>
+<path d="M 100,50 l10,-15 l15,30 l15,-30 l15,30 l15,-30 l10,15" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+<line x1="180" y1="50" x2="260" y2="50" stroke="#1a1a1a" stroke-width="2"/>
+<text x="170" y="85" text-anchor="middle" font-size="13">R_shunt</text>
+<line x1="115" y1="20" x2="115" y2="35" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="225" y1="20" x2="225" y2="35" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="115" y1="20" x2="225" y2="20" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="170" cy="10" r="10" fill="none" stroke="#2563eb" stroke-width="1.5"/>
+<text x="170" y="13" text-anchor="middle" font-size="9" fill="#2563eb">V</text>
+</svg>
+<div class="caption">The zigzag = a normal resistor symbol. Blue wires on top = the separate Kelvin sense connection, going to a voltmeter.</div>
+</div>
+
+<div class="symbol-card">
+<div class="name">Current Transformer (CT)</div>
+<svg viewBox="0 0 320 140" xmlns="http://www.w3.org/2000/svg">
+<line x1="20" y1="50" x2="260" y2="50" stroke="#dc2626" stroke-width="3"/>
+<text x="20" y="35" font-size="12" fill="#dc2626">I (primary, just passes through)</text>
+<circle cx="140" cy="50" r="35" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+<g stroke="#2563eb" stroke-width="2" fill="none">
+<path d="M 120,85 q5,-8 10,0 q5,8 10,0 q5,-8 10,0 q5,8 10,0"/>
+</g>
+<line x1="120" y1="85" x2="100" y2="110" stroke="#2563eb" stroke-width="2"/>
+<line x1="160" y1="85" x2="180" y2="110" stroke="#2563eb" stroke-width="2"/>
+<rect x="95" y="110" width="90" height="18" fill="#fef3c7" stroke="#92400e"/>
+<text x="140" y="123" text-anchor="middle" font-size="10">burden R</text>
+</svg>
+<div class="caption">The circle = the donut-shaped core. The wire just passes straight through (1 turn). The wound coil at the bottom is the secondary, feeding a burden resistor.</div>
+</div>
+
+<div class="symbol-card">
+<div class="name">Hall-effect current sensor (open-loop)</div>
+<svg viewBox="0 0 320 140" xmlns="http://www.w3.org/2000/svg">
+<line x1="20" y1="60" x2="260" y2="60" stroke="#dc2626" stroke-width="3"/>
+<text x="20" y="45" font-size="12" fill="#dc2626">I</text>
+<rect x="120" y="35" width="40" height="50" fill="#e0e7ff" stroke="#4338ca" stroke-width="2"/>
+<text x="140" y="64" text-anchor="middle" font-size="10" fill="#4338ca">Hall</text>
+<line x1="160" y1="50" x2="200" y2="50" stroke="#16a34a" stroke-width="2"/>
+<text x="205" y="54" font-size="11" fill="#16a34a">V_out</text>
+<line x1="160" y1="70" x2="200" y2="70" stroke="#16a34a" stroke-width="2"/>
+</svg>
+<div class="caption">A small rectangular "Hall" chip symbol sits beside (or around) the conductor, with two extra output pins for V_out — no direct electrical connection to the power wire.</div>
+</div>
+
+<div class="symbol-card">
+<div class="name">Closed-loop / zero-flux Hall sensor</div>
+<svg viewBox="0 0 320 160" xmlns="http://www.w3.org/2000/svg">
+<rect x="80" y="30" width="160" height="90" rx="12" fill="none" stroke="#9ca3af" stroke-width="4"/>
+<line x1="20" y1="55" x2="260" y2="55" stroke="#dc2626" stroke-width="3"/>
+<text x="20" y="40" font-size="12" fill="#dc2626">I (1 turn)</text>
+<g stroke="#2563eb" stroke-width="2" fill="none">
+<path d="M 130,95 q8,-10 16,0 q8,10 16,0 q8,-10 16,0"/>
+</g>
+<rect x="240" y="80" width="50" height="24" rx="4" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+<text x="265" y="96" text-anchor="middle" font-size="9" fill="#2563eb">amp</text>
+<path d="M 240,92 H 230" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="160" y1="55" x2="160" y2="75" stroke="#d97706" stroke-width="1.5" stroke-dasharray="3,2"/>
+<circle cx="160" cy="75" r="8" fill="#fef3c7" stroke="#92400e"/>
+</svg>
+<div class="caption">Same core + Hall arrangement, but now with an extra feedback winding and a small amplifier box drawn alongside — this extra loop is the visual giveaway it's closed-loop, not open-loop.</div>
+</div>
+
+<div class="symbol-card">
+<div class="name">Fluxgate sensor</div>
+<svg viewBox="0 0 320 140" xmlns="http://www.w3.org/2000/svg">
+<rect x="60" y="30" width="200" height="70" rx="35" fill="none" stroke="#9ca3af" stroke-width="4"/>
+<text x="160" y="20" text-anchor="middle" font-size="11" fill="#555">saturable core</text>
+<g stroke="#d97706" stroke-width="2" fill="none">
+<path d="M 90,65 q8,-10 16,0 q8,10 16,0 q8,-10 16,0 q8,10 16,0 q8,-10 16,0"/>
+</g>
+<text x="160" y="120" text-anchor="middle" font-size="10" fill="#d97706">excitation winding (driven by AC oscillator)</text>
+</svg>
+<div class="caption">An oval/racetrack-shaped core (so it saturates predictably), with an excitation winding drawn directly on it — plus, in full diagrams, a separate pickup winding and oscillator block.</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="symbols-temp">3. Temperature sensor circuit symbols</h2>
+
+<div class="symbol-card">
+<div class="name">Thermocouple</div>
+<svg viewBox="0 0 320 110" xmlns="http://www.w3.org/2000/svg">
+<line x1="40" y1="35" x2="160" y2="35" stroke="#dc2626" stroke-width="4"/>
+<line x1="40" y1="65" x2="160" y2="65" stroke="#2563eb" stroke-width="4"/>
+<path d="M 160,35 L 190,50 L 160,65" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+<circle cx="190" cy="50" r="4" fill="#1a1a1a"/>
+<text x="120" y="20" text-anchor="middle" font-size="10">metal A</text>
+<text x="120" y="85" text-anchor="middle" font-size="10">metal B</text>
+<text x="195" y="50" font-size="10">hot junction</text>
+</svg>
+<div class="caption">Two different-colored wires meeting at a single point (the junction) — always drawn as exactly two dissimilar conductors joined, never more.</div>
+</div>
+
+<div class="symbol-card">
+<div class="name">RTD (e.g. Pt100)</div>
+<svg viewBox="0 0 320 100" xmlns="http://www.w3.org/2000/svg">
+<line x1="20" y1="50" x2="90" y2="50" stroke="#1a1a1a" stroke-width="2"/>
+<rect x="90" y="35" width="100" height="30" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+<line x1="190" y1="50" x2="260" y2="50" stroke="#1a1a1a" stroke-width="2"/>
+<text x="140" y="55" text-anchor="middle" font-size="11">RTD / Pt100</text>
+<path d="M 100,75 l10,10 M 110,75 l10,10 M 120,75 l10,10" stroke="#dc2626" stroke-width="1.5"/>
+<text x="140" y="95" text-anchor="middle" font-size="9" fill="#dc2626">↑ heat sensitive</text>
+</svg>
+<div class="caption">A plain resistor box, just labeled "RTD" or "Pt100" — the symbol itself doesn't show anything fancy, only the label tells you it's temperature-sensitive.</div>
+</div>
+
+<div class="symbol-card">
+<div class="name">NTC / PTC thermistor</div>
+<svg viewBox="0 0 320 110" xmlns="http://www.w3.org/2000/svg">
+<line x1="20" y1="50" x2="90" y2="50" stroke="#1a1a1a" stroke-width="2"/>
+<rect x="90" y="35" width="100" height="30" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+<line x1="190" y1="50" x2="260" y2="50" stroke="#1a1a1a" stroke-width="2"/>
+<line x1="70" y1="80" x2="200" y2="20" stroke="#1a1a1a" stroke-width="2"/>
+<path d="M 192,22 l8,-2 l-2,8 z" fill="#1a1a1a"/>
+<text x="140" y="98" text-anchor="middle" font-size="11">t°</text>
+</svg>
+<div class="caption">A resistor box with a diagonal arrow through it (like a variable resistor) plus a small "t°" label — this diagonal-arrow-through-a-box is the standard symbol for any temperature-dependent resistor (NTC or PTC; the label/datasheet tells you which).</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="symbols-pos">4. Position sensor (encoder) circuit symbols</h2>
+
+<div class="symbol-card">
+<div class="name">Incremental encoder (block symbol)</div>
+<svg viewBox="0 0 320 140" xmlns="http://www.w3.org/2000/svg">
+<rect x="100" y="30" width="120" height="80" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+<text x="160" y="75" text-anchor="middle" font-size="13" fill="#2563eb">ENC</text>
+<line x1="40" y1="55" x2="100" y2="55" stroke="#1a1a1a" stroke-width="2"/>
+<text x="35" y="50" text-anchor="end" font-size="11">shaft ⟲</text>
+<line x1="220" y1="45" x2="270" y2="45" stroke="#16a34a" stroke-width="2"/>
+<text x="275" y="49" font-size="11">A</text>
+<line x1="220" y1="65" x2="270" y2="65" stroke="#d97706" stroke-width="2"/>
+<text x="275" y="69" font-size="11">B</text>
+<line x1="220" y1="85" x2="270" y2="85" stroke="#9ca3af" stroke-width="2"/>
+<text x="275" y="89" font-size="11">Z</text>
+</svg>
+<div class="caption">A box labeled ENC with a shaft going in on one side, and three labeled output lines (A, B, Z) coming out the other side.</div>
+</div>
+
+<div class="symbol-card">
+<div class="name">Absolute encoder (block symbol)</div>
+<svg viewBox="0 0 320 140" xmlns="http://www.w3.org/2000/svg">
+<rect x="100" y="20" width="120" height="100" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+<text x="160" y="65" text-anchor="middle" font-size="13" fill="#16a34a">ABS</text>
+<line x1="40" y1="55" x2="100" y2="55" stroke="#1a1a1a" stroke-width="2"/>
+<text x="35" y="50" text-anchor="end" font-size="11">shaft ⟲</text>
+<line x1="220" y1="40" x2="270" y2="40" stroke="#9ca3af" stroke-width="2"/>
+<line x1="220" y1="55" x2="270" y2="55" stroke="#9ca3af" stroke-width="2"/>
+<line x1="220" y1="70" x2="270" y2="70" stroke="#9ca3af" stroke-width="2"/>
+<line x1="220" y1="85" x2="270" y2="85" stroke="#9ca3af" stroke-width="2"/>
+<text x="275" y="68" font-size="11">bus / code out</text>
+</svg>
+<div class="caption">Same idea as incremental, but instead of separate A/B/Z lines, the output is usually a bundled multi-bit bus or a single serial interface (e.g. SSI) carrying the position code.</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="dc-question">5. Which sensors work with DC, and why</h2>
+<table style="width:100%; border-collapse: collapse; margin: 16px 0; font-size: 14px;">
+<tr style="background:#f8f9fb;"><th style="border:1px solid #e5e7eb; padding:8px;">Sensor</th><th style="border:1px solid #e5e7eb; padding:8px;">Works on DC?</th><th style="border:1px solid #e5e7eb; padding:8px;">Why</th></tr>
+<tr><td style="border:1px solid #e5e7eb; padding:8px;">Shunt resistor</td><td style="border:1px solid #e5e7eb; padding:8px; color:#16a34a; font-weight:700;">Yes</td><td style="border:1px solid #e5e7eb; padding:8px;">Ohm's law V=IR works regardless of whether I is AC or DC.</td></tr>
+<tr><td style="border:1px solid #e5e7eb; padding:8px;">Current Transformer (CT)</td><td style="border:1px solid #e5e7eb; padding:8px; color:#dc2626; font-weight:700;">No</td><td style="border:1px solid #e5e7eb; padding:8px;">Relies on Faraday's law: needs a CHANGING flux to induce a voltage. Steady DC = steady flux = zero induced voltage.</td></tr>
+<tr><td style="border:1px solid #e5e7eb; padding:8px;">Hall-effect (open or closed-loop)</td><td style="border:1px solid #e5e7eb; padding:8px; color:#16a34a; font-weight:700;">Yes</td><td style="border:1px solid #e5e7eb; padding:8px;">The Hall element reacts to the field's instantaneous STRENGTH directly, not to a change in it. A steady DC field still produces a steady Hall voltage.</td></tr>
+<tr><td style="border:1px solid #e5e7eb; padding:8px;">Fluxgate</td><td style="border:1px solid #e5e7eb; padding:8px; color:#16a34a; font-weight:700;">Yes</td><td style="border:1px solid #e5e7eb; padding:8px;">It generates its OWN internal AC excitation to probe the field — the field being measured doesn't need to change at all; only the internally-generated excitation needs to be AC.</td></tr>
+</table>
+<div class="box green">
+<p><b>The exam-ready one-liner:</b> "CTs can't measure DC because they rely on induction (a changing flux), but Hall-effect and fluxgate sensors can, because they sense the magnetic field's strength directly rather than relying on a change in it."</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="traps">6. Exam trap library</h2>
+
+<div class="trap">
+<span class="tag">CT trap</span>
+<p>"A current transformer can measure DC current." → <b>False.</b> CTs need changing flux (Faraday's law); steady DC produces zero induced secondary voltage.</p>
+</div>
+
+<div class="trap">
+<span class="tag">Zero-flux trap</span>
+<p>"In a zero-flux sensor, N₁·I₁ &lt; N₂·I₂ at balance." → <b>False.</b> The feedback loop forces the flux to exactly zero, which requires an exact EQUALITY: N₁·I₁ = N₂·I₂.</p>
+</div>
+
+<div class="trap">
+<span class="tag">PTC trap</span>
+<p>"A PTC thermistor accurately measures temperature." → <b>False.</b> PTC is a binary protection trip (sharp resistance jump at threshold), not a precision continuous sensor.</p>
+</div>
+
+<div class="trap">
+<span class="tag">Thermocouple trap</span>
+<p>"A thermocouple generates a current proportional to temperature." → <b>False</b> (watch this swap — past exams alternated "voltage"/"current" between versions). A thermocouple generates a VOLTAGE (Seebeck effect); current only flows if you connect it in a closed loop with some resistance.</p>
+</div>
+
+<div class="trap">
+<span class="tag">Encoder direction trap</span>
+<p>"You need the Z (index) channel to detect direction of rotation." → <b>False.</b> Direction comes purely from which of A/B changes first. Z only gives a once-per-revolution reference position, unrelated to direction.</p>
+</div>
+
+<div class="trap">
+<span class="tag">Encoder resolution trap</span>
+<p>"A 50 PPR encoder gives 50 counts/rev." → <b>False</b> (unless explicitly told single-edge counting is used). With standard ×4 quadrature decoding, it's 50 × 4 = 200 counts/rev. Watch for whether the question specifies ×1, ×2, or ×4 decoding.</p>
+</div>
+
+<div class="trap">
+<span class="tag">Shunt resistor trap</span>
+<p>"You can measure the shunt voltage using the same two wires that carry the load current." → <b>False</b> (for high-accuracy applications). Lead/contact resistance in those wires adds error — a 4-wire Kelvin connection with separate sense leads is needed for precision.</p>
+</div>
+
+<div class="trap">
+<span class="tag">RTD trap</span>
+<p>"An RTD directly outputs a voltage proportional to temperature." → <b>False.</b> An RTD's resistance changes with temperature; you must pass a known excitation current through it and measure the resulting voltage drop to back-calculate resistance, then temperature.</p>
+</div>
+
+<div class="trap">
+<span class="tag">Naming trap</span>
+<p>"A current transformer is a type of Hall-effect sensor." → <b>False.</b> CT = inductive/transformer principle (Faraday's law). Hall sensors (open- or closed-loop) = semiconductor Hall effect. Two unrelated physical principles — don't conflate them.</p>
+</div>
+
+</div>
+</body>
+</html>
